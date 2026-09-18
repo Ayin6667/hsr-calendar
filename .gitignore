@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+*.pyo
+/tmp/hsr_*
+.venv/
+env/
+*.log
