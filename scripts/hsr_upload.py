@@ -167,8 +167,10 @@ def main():
 
     files = [
         (prefix + "/calendar.png", os.path.join(HERE, "calendar.png")),
+        (prefix + "/calendar.html", os.path.join(HERE, "calendar.html")),
         (prefix + "/events.json", os.path.join(HERE, "events.json")),
     ]
+    missing_optional = {prefix + "/calendar.html"}
     msg = "chore(hsr): 周历 %s 归档（week_start %s, ISO %s/%s）" % (
         week_tag, ws.isoformat(), iso[0], week_tag)
     print("REPO   : " + REPO + "  branch=" + BRANCH)
@@ -177,6 +179,9 @@ def main():
     all_ok = True
     for remote, local in files:
         if not os.path.exists(local):
+            if remote in missing_optional:
+                print("SKIP    " + remote + "（本地无此文件，非必需）")
+                continue
             print("MISSING " + local)
             all_ok = False
             continue
