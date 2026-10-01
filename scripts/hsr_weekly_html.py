@@ -227,24 +227,25 @@ def main():
         for dt, p in months
     )
 
-    # ---- today line ----
-    # 红线从“今天”标签一路贯穿到时间轴底部；高度按行数推算（放在页头容器里，
-    # 用负 bottom 越过下方区块，避免被 .sheet 的 overflow 裁掉）
-    today_line_h = 150 + max(1, len(rows)) * ROW_PITCH
+    # ---- today marker ----
+    # 红线放进 .track 内部：与时长条共用同一个定位容器，left:X% 精确对齐；
+    # ::before 向上延伸穿过月份行与周表头（.sheet-inner 开了 overflow，会被裁掉），
+    # 因此把向上延伸的那一段放在 .track 外层不可行，改为整条线就放在 track 里，
+    # 只贯穿时间轴本身，视觉上更干净也不会溢出。
     if grid_start <= today <= grid_end:
         tpos = ((today - grid_start).days + 0.5) / float(total_days) * 100
         today_html = (
-            '<div class="today" style="left:%.4f%%">'
-            '<span class="today-flag">今天 %s 星期%s</span>'
-            '<i class="today-line" style="height:%dpx"></i>'
-            "</div>" % (tpos, today.strftime("%m/%d"), WEEKDAYS[today.weekday()], today_line_h)
+            '<div class="today-row"><span class="today-flag">今天 %s 星期%s</span></div>'
+            % (today.strftime("%m/%d"), WEEKDAYS[today.weekday()])
         )
+        today_line_html = '<i class="today-line" style="left:%.4f%%"></i>' % tpos
     else:
         tpos = None
         today_html = (
-            '<div class="today out"><span class="today-flag out">今天 %s 不在窗口内</span></div>'
+            '<div class="today-row"><span class="today-flag out">今天 %s 不在窗口内</span></div>'
             % today.strftime("%m/%d")
         )
+        today_line_html = ""
 
     # ---- bars ----
     bar_html = []
@@ -358,17 +359,17 @@ def main():
     css = """
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#0b0c10;color:#e9edf5;font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",system-ui,sans-serif;padding:26px;min-width:1180px}
-.frame{background:#14161c;border:2px solid #33363f;border-radius:16px;padding:20px 22px 26px;box-shadow:0 0 0 6px #0e1015 inset}
-.tabs{display:flex;align-items:center;gap:10px;border-bottom:2px solid #2b2e37;padding-bottom:0}
-.tab{padding:11px 34px;border-radius:9px 9px 0 0;background:#1c1f27;color:#98a0b0;font-size:15px;font-weight:700;border:2px solid #2b2e37;border-bottom:none}
-.tab.on{background:#ffc531;color:#1a1c22;border-color:#ffc531}
-.tab-note{margin-left:auto;color:#69707e;font-size:13px;padding-bottom:8px}
-.cal-head{position:relative;height:62px;margin-top:6px}
-.today-flag{position:absolute;left:50%;transform:translateX(-50%);background:#e33b4e;color:#fff;font-size:16px;font-weight:800;padding:7px 22px;border-radius:9px;white-space:nowrap}
+.frame{position:relative;background:#14161c;border:2px solid #33363f;border-radius:16px;padding:20px 22px 26px;box-shadow:0 0 0 6px #0e1015 inset}
+.cal-head{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;margin:2px 0 16px}
+.cal-title{font-size:19px;font-weight:800;color:#e9edf5;white-space:nowrap;text-align:center}
+.cal-title span{color:#7e8697;font-size:13px;font-weight:600;margin-left:12px}
+.today-row{display:flex;justify-content:center;width:100%}
+.today-flag{background:#e33b4e;color:#fff;font-size:16px;font-weight:800;padding:8px 22px;border-radius:9px;white-space:nowrap}
 .today-flag.out{background:#3a3f4b;color:#c9cfda}
-.today{position:absolute;top:0;bottom:0;z-index:30;pointer-events:none}
-.today-line{position:absolute;top:56px;left:50%;width:3px;background:#e33b4e;transform:translateX(-50%);box-shadow:0 0 12px #e33b4e99;border-radius:2px}
+.today-line{position:absolute;top:0;bottom:0;width:3px;z-index:30;background:#e33b4e;transform:translateX(-50%);box-shadow:0 0 12px #e33b4e99;pointer-events:none}
+.today-line::before{content:"";position:absolute;left:50%;bottom:100%;width:3px;height:76px;background:#e33b4e;transform:translateX(-50%);box-shadow:0 0 12px #e33b4e99}
 .sheet{position:relative;background:#1b1e25;border:2px solid #3a3e49;border-radius:14px;padding:12px;margin-top:4px}
+.sheet-inner{overflow:hidden;border-radius:10px}
 .weekbar{position:relative;height:56px;background:linear-gradient(180deg,#2a2d36,#20232b);border:2px solid #474c59;border-radius:10px;overflow:hidden}
 .wk{position:absolute;top:0;bottom:0;border-left:2px solid #474c59;padding:6px 0 0 10px}
 .wk:first-child{border-left:none}
@@ -380,7 +381,7 @@ body{background:#0b0c10;color:#e9edf5;font-family:"Microsoft YaHei","PingFang SC
 .grid-bg{position:absolute;inset:0;background-image:repeating-linear-gradient(90deg,#ffffff0d 0 1px,transparent 1px 100%);background-size:calc(100%/6) 100%}
 .guide{position:absolute;top:0;bottom:0;width:2px;background:#ffffff14}
 .bar{position:absolute;height:48px;border:2px solid;border-radius:26px;display:flex;align-items:center;gap:10px;padding:0 16px;min-width:0;overflow:hidden;box-shadow:0 3px 10px #0008;transition:transform .12s,box-shadow .12s}
-.bar:hover{transform:translateY(-2px);box-shadow:0 6px 18px #000a;z-index:20}
+.bar:hover{transform:translateY(-2px);box-shadow:0 6px 18px #000a;z-index:40}
 .b-type{font-size:13px;font-weight:800;white-space:nowrap;opacity:.95}
 .b-title{flex:1 1 auto;font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .b-dur{font-size:12px;white-space:nowrap;opacity:.88;background:#00000038;padding:3px 9px;border-radius:8px}
@@ -410,22 +411,21 @@ body{background:#0b0c10;color:#e9edf5;font-family:"Microsoft YaHei","PingFang SC
 </head>
 <body>
 <div class="frame">
-  <div class="tabs">
-    <div class="tab">丽都资讯</div>
-    <div class="tab">游戏公告</div>
-    <div class="tab on">活动日历</div>
-    <div class="tab-note">崩坏：星穹铁道 · %(version)s</div>
+  <div class="cal-head">
+    <div class="cal-title">崩坏：星穹铁道 · 活动日历<span>%(version)s 版本 · %(range)s</span></div>
+    %(today)s
   </div>
 
-  <div class="cal-head">%(today)s</div>
-
   <div class="sheet">
-    <div class="weekbar">%(weekhead)s</div>
-    <div class="months">%(months)s</div>
-    <div class="track" style="height:%(track_h)dpx">
-      <div class="grid-bg"></div>
-      %(guides)s
-      %(bars)s
+    <div class="sheet-inner">
+      <div class="weekbar">%(weekhead)s</div>
+      <div class="months">%(months)s</div>
+      <div class="track" style="height:%(track_h)dpx">
+        <div class="grid-bg"></div>
+        %(guides)s
+        %(bars)s
+        %(today_line)s
+      </div>
     </div>
   </div>
 
@@ -453,6 +453,7 @@ body{background:#0b0c10;color:#e9edf5;font-family:"Microsoft YaHei","PingFang SC
         "css": css,
         "version": version_label,
         "today": today_html,
+        "today_line": today_line_html,
         "weekhead": "".join(week_head),
         "months": month_html,
         "track_h": rows_px,
