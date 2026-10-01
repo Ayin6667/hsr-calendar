@@ -7,17 +7,17 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#0b0c10;color:#e9edf5;font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",system-ui,sans-serif;padding:26px;min-width:1180px}
-.frame{background:#14161c;border:2px solid #33363f;border-radius:16px;padding:20px 22px 26px;box-shadow:0 0 0 6px #0e1015 inset}
-.tabs{display:flex;align-items:center;gap:10px;border-bottom:2px solid #2b2e37;padding-bottom:0}
-.tab{padding:11px 34px;border-radius:9px 9px 0 0;background:#1c1f27;color:#98a0b0;font-size:15px;font-weight:700;border:2px solid #2b2e37;border-bottom:none}
-.tab.on{background:#ffc531;color:#1a1c22;border-color:#ffc531}
-.tab-note{margin-left:auto;color:#69707e;font-size:13px;padding-bottom:8px}
-.cal-head{position:relative;height:62px;margin-top:6px}
-.today-flag{position:absolute;left:50%;transform:translateX(-50%);background:#e33b4e;color:#fff;font-size:16px;font-weight:800;padding:7px 22px;border-radius:9px;white-space:nowrap}
+.frame{position:relative;background:#14161c;border:2px solid #33363f;border-radius:16px;padding:20px 22px 26px;box-shadow:0 0 0 6px #0e1015 inset}
+.cal-head{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;margin:2px 0 16px}
+.cal-title{font-size:19px;font-weight:800;color:#e9edf5;white-space:nowrap;text-align:center}
+.cal-title span{color:#7e8697;font-size:13px;font-weight:600;margin-left:12px}
+.today-row{display:flex;justify-content:center;width:100%}
+.today-flag{background:#e33b4e;color:#fff;font-size:16px;font-weight:800;padding:8px 22px;border-radius:9px;white-space:nowrap}
 .today-flag.out{background:#3a3f4b;color:#c9cfda}
-.today{position:absolute;top:0;bottom:0;z-index:30;pointer-events:none}
-.today-line{position:absolute;top:56px;left:50%;width:3px;background:#e33b4e;transform:translateX(-50%);box-shadow:0 0 12px #e33b4e99;border-radius:2px}
+.today-line{position:absolute;top:0;bottom:0;width:3px;z-index:30;background:#e33b4e;transform:translateX(-50%);box-shadow:0 0 12px #e33b4e99;pointer-events:none}
+.today-line::before{content:"";position:absolute;left:50%;bottom:100%;width:3px;height:76px;background:#e33b4e;transform:translateX(-50%);box-shadow:0 0 12px #e33b4e99}
 .sheet{position:relative;background:#1b1e25;border:2px solid #3a3e49;border-radius:14px;padding:12px;margin-top:4px}
+.sheet-inner{overflow:hidden;border-radius:10px}
 .weekbar{position:relative;height:56px;background:linear-gradient(180deg,#2a2d36,#20232b);border:2px solid #474c59;border-radius:10px;overflow:hidden}
 .wk{position:absolute;top:0;bottom:0;border-left:2px solid #474c59;padding:6px 0 0 10px}
 .wk:first-child{border-left:none}
@@ -29,7 +29,7 @@ body{background:#0b0c10;color:#e9edf5;font-family:"Microsoft YaHei","PingFang SC
 .grid-bg{position:absolute;inset:0;background-image:repeating-linear-gradient(90deg,#ffffff0d 0 1px,transparent 1px 100%);background-size:calc(100%/6) 100%}
 .guide{position:absolute;top:0;bottom:0;width:2px;background:#ffffff14}
 .bar{position:absolute;height:48px;border:2px solid;border-radius:26px;display:flex;align-items:center;gap:10px;padding:0 16px;min-width:0;overflow:hidden;box-shadow:0 3px 10px #0008;transition:transform .12s,box-shadow .12s}
-.bar:hover{transform:translateY(-2px);box-shadow:0 6px 18px #000a;z-index:20}
+.bar:hover{transform:translateY(-2px);box-shadow:0 6px 18px #000a;z-index:40}
 .b-type{font-size:13px;font-weight:800;white-space:nowrap;opacity:.95}
 .b-title{flex:1 1 auto;font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .b-dur{font-size:12px;white-space:nowrap;opacity:.88;background:#00000038;padding:3px 9px;border-radius:8px}
@@ -51,22 +51,21 @@ body{background:#0b0c10;color:#e9edf5;font-family:"Microsoft YaHei","PingFang SC
 </head>
 <body>
 <div class="frame">
-  <div class="tabs">
-    <div class="tab">丽都资讯</div>
-    <div class="tab">游戏公告</div>
-    <div class="tab on">活动日历</div>
-    <div class="tab-note">崩坏：星穹铁道 · v4.6</div>
+  <div class="cal-head">
+    <div class="cal-title">崩坏：星穹铁道 · 活动日历<span>v4.6 版本 · 2026-09-26 ~ 2026-11-06</span></div>
+    <div class="today-row"><span class="today-flag">今天 10/01 星期四</span></div>
   </div>
 
-  <div class="cal-head"><div class="today" style="left:13.0952%"><span class="today-flag">今天 10/01 星期四</span><i class="today-line" style="height:498px"></i></div></div>
-
   <div class="sheet">
-    <div class="weekbar"><div class="wk" style="left:0.0000%;width:16.6667%"><span class="wk-name">第一周</span><span class="wk-range">09/26 ~ 10/02</span></div><div class="wk" style="left:16.6667%;width:16.6667%"><span class="wk-name">第二周</span><span class="wk-range">10/03 ~ 10/09</span></div><div class="wk" style="left:33.3333%;width:16.6667%"><span class="wk-name">第三周</span><span class="wk-range">10/10 ~ 10/16</span></div><div class="wk" style="left:50.0000%;width:16.6667%"><span class="wk-name">第四周</span><span class="wk-range">10/17 ~ 10/23</span></div><div class="wk" style="left:66.6667%;width:16.6667%"><span class="wk-name">第五周</span><span class="wk-range">10/24 ~ 10/30</span></div><div class="wk" style="left:83.3333%;width:16.6667%"><span class="wk-name">第六周</span><span class="wk-range">10/31 ~ 11/06</span></div></div>
-    <div class="months"><span class="mo" style="left:0.0000%">2026年9月</span><span class="mo" style="left:11.9048%">2026年10月</span><span class="mo" style="left:85.7143%">2026年11月</span></div>
-    <div class="track" style="height:364px">
-      <div class="grid-bg"></div>
-      <i class="guide" style="left:16.6667%"></i><i class="guide" style="left:33.3333%"></i><i class="guide" style="left:50.0000%"></i><i class="guide" style="left:66.6667%"></i><i class="guide" style="left:83.3333%"></i>
-      <div class="bar group" style="left:4.7619%;width:95.2381%;top:0px;background:linear-gradient(90deg,#ff8a1f,#ffc457);border-color:#ffb347;color:#fff2d6" title="活动跃迁「出自深海的珍珠」（其一）：限定5★「真珠（欢愉·冰）」概率提升，持续整版本至11/10 15:00 / 光锥活动跃迁「定影光阴」：限定5★光锥「献给明日的色彩（欢愉）」概率提升，至11/10 15:00 / 复刻跃迁「花盛之裁者」：限定5★「绯英（欢愉·物理）」复刻，至10/21 11:59 / 光锥复刻跃迁「溯回的记忆」：限定5★光锥「邂逅于下一个花季（欢愉）」概率提升，至10/21 11:59"><span class="b-type" style="color:#ffb347">◆ 跃迁</span><span class="b-title">卡池 4 项 · 限定5★「真珠（欢愉·冰）」概率提升</span><span class="b-dur">09/28 ~ 11/10（44天） · 超出窗口</span><span class="b-src src-official">🟢1</span><span class="b-src src-verified">🟡1</span><span class="b-src src-doubtful">🔴2</span></div><div class="bar" style="left:4.7619%;width:95.2381%;top:58px;background:linear-gradient(90deg,#f07a16,#ffb04d);border-color:#ff9e2c;color:#fff3e0" title="2026-09-28 ~ 2026-11-11（窗口外延续） | 版本活动「爱、幽灵与机器人」开启（机铁生产线改造 + 战斗玩法），至11/11 03:59"><span class="b-type" style="color:#ff9e2c">● 活动</span><span class="b-title">版本活动「爱、幽灵与机器人」开启（机铁生产线改造 + 战斗玩法），至11/11 03:59</span><span class="b-dur">09/28 ~ 11/11（45天）· 超出窗口</span><span class="b-cont">续</span><span class="b-src src-ok" title="官方确认">🟢</span></div><div class="bar" style="left:4.7619%;width:95.2381%;top:116px;background:linear-gradient(90deg,#f07a16,#ffb04d);border-color:#ff9e2c;color:#fff3e0" title="2026-09-28 ~ 2026-11-11（窗口外延续） | 版本活动「愿力全开！打倒贪饕！」开启：击破受「贪饕」侵蚀的敌人积攒愿力，解锁星琼×500、潮玩礼券×18、纪念勋章；至11/11 06:00（UTC+8）"><span class="b-type" style="color:#ff9e2c">● 活动</span><span class="b-title">版本活动「愿力全开！打倒贪饕！」开启：击破受「贪饕」侵蚀的敌人积攒愿力，解锁星琼×500、潮玩礼券×18、纪念勋章；至11/11 06:00（UT…</span><span class="b-dur">09/28 ~ 11/11（45天）· 超出窗口</span><span class="b-cont">续</span><span class="b-src src-warn" title="多方印证">🟡</span></div><div class="bar" style="left:4.7619%;width:95.2381%;top:174px;background:linear-gradient(90deg,#f07a16,#ffb04d);border-color:#ff9e2c;color:#fff3e0" title="2026-09-28 ~ 2026-11-10（窗口外延续） | 登录活动「巡星之礼」开启：累计登录最多可领星轨专票×10，至11/10 03:59"><span class="b-type" style="color:#ff9e2c">● 活动</span><span class="b-title">登录活动「巡星之礼」开启：累计登录最多可领星轨专票×10，至11/10 03:59</span><span class="b-dur">09/28 ~ 11/10（44天）· 超出窗口</span><span class="b-cont">续</span><span class="b-src src-warn" title="多方印证">🟡</span></div><div class="bar" style="left:4.7619%;width:95.2381%;top:232px;background:linear-gradient(90deg,#f07a16,#ffb04d);border-color:#ff9e2c;color:#fff3e0" title="2026-09-28 ~ 2026-11-09（窗口外延续） | 「无名勋礼」4.6期开启：解锁荣勋可获星琼×680、光锥碎忆、星轨专票×4、自塑尘脂×2等；奖章含头像「真珠·宫廷」「银枝·宫廷」，至11/09 03:59"><span class="b-type" style="color:#ff9e2c">● 活动</span><span class="b-title">「无名勋礼」4.6期开启：解锁荣勋可获星琼×680、光锥碎忆、星轨专票×4、自塑尘脂×2等；奖章含头像「真珠·宫廷」「银枝·宫廷」，至11/09 …</span><span class="b-dur">09/28 ~ 11/09（43天）· 超出窗口</span><span class="b-cont">续</span><span class="b-src src-ok" title="官方确认">🟢</span></div><div class="bar" style="left:4.7619%;width:95.2381%;top:290px;background:linear-gradient(90deg,#3f6fd8,#7aa2ff);border-color:#6f95ff;color:#e2ebff" title="2026-09-28 ~ 2026-11-11（窗口外延续） | 新时装上架服装展示橱窗：风堇「暖棉晴空」、绯英「月华初绽」（限时折扣2680星琼，11/11 03:59后恢复3280）"><span class="b-type" style="color:#6f95ff">■ 公告</span><span class="b-title">新时装上架服装展示橱窗：风堇「暖棉晴空」、绯英「月华初绽」（限时折扣2680星琼，11/11 03:59后恢复3280）</span><span class="b-dur">09/28 ~ 11/11（45天）· 超出窗口</span><span class="b-cont">续</span><span class="b-src src-warn" title="多方印证">🟡</span></div>
+    <div class="sheet-inner">
+      <div class="weekbar"><div class="wk" style="left:0.0000%;width:16.6667%"><span class="wk-name">第一周</span><span class="wk-range">09/26 ~ 10/02</span></div><div class="wk" style="left:16.6667%;width:16.6667%"><span class="wk-name">第二周</span><span class="wk-range">10/03 ~ 10/09</span></div><div class="wk" style="left:33.3333%;width:16.6667%"><span class="wk-name">第三周</span><span class="wk-range">10/10 ~ 10/16</span></div><div class="wk" style="left:50.0000%;width:16.6667%"><span class="wk-name">第四周</span><span class="wk-range">10/17 ~ 10/23</span></div><div class="wk" style="left:66.6667%;width:16.6667%"><span class="wk-name">第五周</span><span class="wk-range">10/24 ~ 10/30</span></div><div class="wk" style="left:83.3333%;width:16.6667%"><span class="wk-name">第六周</span><span class="wk-range">10/31 ~ 11/06</span></div></div>
+      <div class="months"><span class="mo" style="left:0.0000%">2026年9月</span><span class="mo" style="left:11.9048%">2026年10月</span><span class="mo" style="left:85.7143%">2026年11月</span></div>
+      <div class="track" style="height:364px">
+        <div class="grid-bg"></div>
+        <i class="guide" style="left:16.6667%"></i><i class="guide" style="left:33.3333%"></i><i class="guide" style="left:50.0000%"></i><i class="guide" style="left:66.6667%"></i><i class="guide" style="left:83.3333%"></i>
+        <div class="bar group" style="left:4.7619%;width:95.2381%;top:0px;background:linear-gradient(90deg,#ff8a1f,#ffc457);border-color:#ffb347;color:#fff2d6" title="活动跃迁「出自深海的珍珠」（其一）：限定5★「真珠（欢愉·冰）」概率提升，持续整版本至11/10 15:00 / 光锥活动跃迁「定影光阴」：限定5★光锥「献给明日的色彩（欢愉）」概率提升，至11/10 15:00 / 复刻跃迁「花盛之裁者」：限定5★「绯英（欢愉·物理）」复刻，至10/21 11:59 / 光锥复刻跃迁「溯回的记忆」：限定5★光锥「邂逅于下一个花季（欢愉）」概率提升，至10/21 11:59"><span class="b-type" style="color:#ffb347">◆ 跃迁</span><span class="b-title">卡池 4 项 · 限定5★「真珠（欢愉·冰）」概率提升</span><span class="b-dur">09/28 ~ 11/10（44天） · 超出窗口</span><span class="b-src src-official">🟢1</span><span class="b-src src-verified">🟡1</span><span class="b-src src-doubtful">🔴2</span></div><div class="bar" style="left:4.7619%;width:95.2381%;top:58px;background:linear-gradient(90deg,#f07a16,#ffb04d);border-color:#ff9e2c;color:#fff3e0" title="2026-09-28 ~ 2026-11-11（窗口外延续） | 版本活动「爱、幽灵与机器人」开启（机铁生产线改造 + 战斗玩法），至11/11 03:59"><span class="b-type" style="color:#ff9e2c">● 活动</span><span class="b-title">版本活动「爱、幽灵与机器人」开启（机铁生产线改造 + 战斗玩法），至11/11 03:59</span><span class="b-dur">09/28 ~ 11/11（45天）· 超出窗口</span><span class="b-cont">续</span><span class="b-src src-ok" title="官方确认">🟢</span></div><div class="bar" style="left:4.7619%;width:95.2381%;top:116px;background:linear-gradient(90deg,#f07a16,#ffb04d);border-color:#ff9e2c;color:#fff3e0" title="2026-09-28 ~ 2026-11-11（窗口外延续） | 版本活动「愿力全开！打倒贪饕！」开启：击破受「贪饕」侵蚀的敌人积攒愿力，解锁星琼×500、潮玩礼券×18、纪念勋章；至11/11 06:00（UTC+8）"><span class="b-type" style="color:#ff9e2c">● 活动</span><span class="b-title">版本活动「愿力全开！打倒贪饕！」开启：击破受「贪饕」侵蚀的敌人积攒愿力，解锁星琼×500、潮玩礼券×18、纪念勋章；至11/11 06:00（UT…</span><span class="b-dur">09/28 ~ 11/11（45天）· 超出窗口</span><span class="b-cont">续</span><span class="b-src src-warn" title="多方印证">🟡</span></div><div class="bar" style="left:4.7619%;width:95.2381%;top:174px;background:linear-gradient(90deg,#f07a16,#ffb04d);border-color:#ff9e2c;color:#fff3e0" title="2026-09-28 ~ 2026-11-10（窗口外延续） | 登录活动「巡星之礼」开启：累计登录最多可领星轨专票×10，至11/10 03:59"><span class="b-type" style="color:#ff9e2c">● 活动</span><span class="b-title">登录活动「巡星之礼」开启：累计登录最多可领星轨专票×10，至11/10 03:59</span><span class="b-dur">09/28 ~ 11/10（44天）· 超出窗口</span><span class="b-cont">续</span><span class="b-src src-warn" title="多方印证">🟡</span></div><div class="bar" style="left:4.7619%;width:95.2381%;top:232px;background:linear-gradient(90deg,#f07a16,#ffb04d);border-color:#ff9e2c;color:#fff3e0" title="2026-09-28 ~ 2026-11-09（窗口外延续） | 「无名勋礼」4.6期开启：解锁荣勋可获星琼×680、光锥碎忆、星轨专票×4、自塑尘脂×2等；奖章含头像「真珠·宫廷」「银枝·宫廷」，至11/09 03:59"><span class="b-type" style="color:#ff9e2c">● 活动</span><span class="b-title">「无名勋礼」4.6期开启：解锁荣勋可获星琼×680、光锥碎忆、星轨专票×4、自塑尘脂×2等；奖章含头像「真珠·宫廷」「银枝·宫廷」，至11/09 …</span><span class="b-dur">09/28 ~ 11/09（43天）· 超出窗口</span><span class="b-cont">续</span><span class="b-src src-ok" title="官方确认">🟢</span></div><div class="bar" style="left:4.7619%;width:95.2381%;top:290px;background:linear-gradient(90deg,#3f6fd8,#7aa2ff);border-color:#6f95ff;color:#e2ebff" title="2026-09-28 ~ 2026-11-11（窗口外延续） | 新时装上架服装展示橱窗：风堇「暖棉晴空」、绯英「月华初绽」（限时折扣2680星琼，11/11 03:59后恢复3280）"><span class="b-type" style="color:#6f95ff">■ 公告</span><span class="b-title">新时装上架服装展示橱窗：风堇「暖棉晴空」、绯英「月华初绽」（限时折扣2680星琼，11/11 03:59后恢复3280）</span><span class="b-dur">09/28 ~ 11/11（45天）· 超出窗口</span><span class="b-cont">续</span><span class="b-src src-warn" title="多方印证">🟡</span></div>
+        <i class="today-line" style="left:13.0952%"></i>
+      </div>
     </div>
   </div>
 
