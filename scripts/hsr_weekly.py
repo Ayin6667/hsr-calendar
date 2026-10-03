@@ -229,7 +229,7 @@ def main():
     notes = [
         "数据来源：HoYoverse 官方 4.6 版本更新说明、17173（公众号官方转载）、GameWith / GameMarket / Notebookcheck / GameTrader 二次信源交叉核对。",
         "红标 [疑]：信源之间名称或持续时长不一致，请以游戏内公告为准。事件按 week_start %s（周六）~ %s（周五）统计。" % (week_start.isoformat(), week_end.isoformat()),
-        "生成时间：2026-10-01（Asia/Shanghai）    周历类型：独立会话自动生成    触发计划：每周六 13:00",
+        "生成时间：%s（Asia/Shanghai）    周历类型：独立会话自动生成    触发计划：每周六 13:00" % date.today().isoformat(),
     ]
     for i, nt in enumerate(notes):
         dr.text((M + 22, fy + 52 + i * 26), nt, font=f_tiny, fill=DIM if i < 2 else FAINT)
