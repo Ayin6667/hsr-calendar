@@ -165,9 +165,10 @@ def main():
             e = s
         max_end = max(max_end, e)
         items.append({"ev": ev, "start": s, "end": e, "inferred": inferred})
-    # x 轴固定为 weeks*7 天，超出窗口的事件在末端裁剪并标注
+    # x 轴固定为 weeks*7 天；超出窗口的事件在两端裁剪并标注
     total_days = grid_days
     beyond = max_end > grid_end
+    pre_window = any(it["start"] < grid_start for it in items)
 
     def frac(dt):
         return (dt - grid_start).days / float(total_days)
@@ -259,11 +260,16 @@ def main():
                 n_ver = sum(1 for it in pool if it["ev"]["source"] == "verified")
                 n_dou = sum(1 for it in pool if it["ev"]["source"] == "doubtful")
                 clipped = p_end > grid_end
+                lead = p_start < grid_start
                 title_txt = " / ".join(it["ev"]["title"] for it in pool)
                 dur = "%s ~ %s（%d天）" % (p_start.strftime("%m/%d"), p_end.strftime("%m/%d"),
                                           (p_end - p_start).days + 1)
-                if clipped:
+                if lead and clipped:
+                    dur += " · 两端超出窗口"
+                elif clipped:
                     dur += " · 超出窗口"
+                elif lead:
+                    dur += " · 窗口前已开启"
                 titles = [it["ev"]["title"] for it in pool]
                 core = re.sub(r"^(活动跃迁|光锥活动跃迁|复刻跃迁|光锥复刻跃迁)", "", titles[0])
                 core = core.split("：")[-1].split("；")[0].split("，")[0]
@@ -273,16 +279,21 @@ def main():
                 bar_html.append(
                     '<div class="bar group" style="left:%.4f%%;width:%.4f%%;top:%dpx;'
                     'background:%s;border-color:%s;color:%s" title="%s">'
+                    '%s'
                     '<span class="b-type" style="color:%s">◆ 跃迁</span>'
                     '<span class="b-title">%s</span>'
                     '<span class="b-dur">%s</span>'
                     '<span class="b-src src-official">🟢%d</span>'
                     '<span class="b-src src-verified">🟡%d</span>'
                     '<span class="b-src src-doubtful">🔴%d</span>'
+                    '%s'
                     "</div>"
                     % (s_frac * 100, max(1.0, (e_frac - s_frac) * 100), top, grad, edge, ink,
-                       html.escape(title_txt), edge, html.escape(label_txt), dur,
-                       n_off, n_ver, n_dou)
+                       html.escape(title_txt),
+                       '<span class="b-cont">续</span>' if lead else "",
+                       edge, html.escape(label_txt), dur,
+                       n_off, n_ver, n_dou,
+                       '<span class="b-cont">续</span>' if clipped else "")
                 )
                 continue
             s_frac, e_frac, it = entry
@@ -292,6 +303,7 @@ def main():
             grad, _bg, ink, edge = BAR_STYLE.get(typ, BAR_STYLE["note"])
             mark, sname, sclass = SOURCE_META.get(ev["source"], ("🟡", "多方印证", "warn"))
             clipped = e > grid_end
+            lead = it["start"] < grid_start
             width = max(0.9, (e_frac - s_frac) * 100)
             left = s_frac * 100
             days = (e - it["start"]).days + 1
@@ -309,6 +321,7 @@ def main():
             bar_html.append(
                 '<div class="bar" style="left:%.4f%%;width:%.4f%%;top:%dpx;'
                 'background:%s;border-color:%s;color:%s" title="%s | %s">'
+                '%s'
                 '<span class="b-type" style="color:%s">%s %s</span>'
                 '<span class="b-title">%s</span>'
                 '<span class="b-dur">%s</span>'
@@ -317,8 +330,10 @@ def main():
                 "</div>"
                 % (left, width, top, grad, edge, ink,
                    html.escape(ev["date"] + " ~ " + e.isoformat()
-                               + ("（窗口外延续）" if clipped else "")),
+                               + ("（窗口外延续）" if clipped else "")
+                               + ("（窗口前已开启）" if lead else "")),
                    html.escape(ev["title"]),
+                   '<span class="b-cont">续</span>' if lead else "",
                    edge, glyph, label, title, dur,
                    '<span class="b-cont">续</span>' if clipped else "",
                    sclass, sname, mark)
@@ -467,8 +482,10 @@ body{background:#0b0c10;color:#e9edf5;font-family:"Microsoft YaHei","PingFang SC
         "weeks": weeks, "total": total_days,
         "today_s": today.isoformat(),
         "gen": today.isoformat(),
-        "beyond_note": ("部分事件在 <code>%s</code> 之后仍在持续，已在时间轴末端裁剪并标注「超出窗口」。<br>"
-                        % grid_end.isoformat()) if beyond else "",
+        "beyond_note": (("部分事件在 <code>%s</code> 之后仍在持续，已在时间轴末端裁剪并标注「超出窗口」。<br>"
+                         % grid_end.isoformat()) if beyond else "")
+                       + (("有事件在 <code>%s</code> 之前就已开启，已在时间轴起点裁剪并标注「续」。<br>"
+                           % grid_start.isoformat()) if pre_window else ""),
     }
 
     out = os.path.join(HERE, "calendar.html")
