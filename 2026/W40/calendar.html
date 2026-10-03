@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>崩坏：星穹铁道 活动日历 · 2026-09-19 ~ 2026-10-30</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0b0c10;color:#e9edf5;font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",system-ui,sans-serif;padding:26px;min-width:1180px}
+.frame{position:relative;background:#14161c;border:2px solid #33363f;border-radius:16px;padding:20px 22px 26px;box-shadow:0 0 0 6px #0e1015 inset}
+.cal-head{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;margin:2px 0 16px}
+.cal-title{font-size:19px;font-weight:800;color:#e9edf5;white-space:nowrap;text-align:center}
+.cal-title span{color:#7e8697;font-size:13px;font-weight:600;margin-left:12px}
+.today-row{display:flex;justify-content:center;width:100%}
+.today-flag{background:#e33b4e;color:#fff;font-size:16px;font-weight:800;padding:8px 22px;border-radius:9px;white-space:nowrap}
+.today-flag.out{background:#3a3f4b;color:#c9cfda}
+.today-line{position:absolute;top:0;bottom:0;width:3px;z-index:30;background:#e33b4e;transform:translateX(-50%);box-shadow:0 0 12px #e33b4e99;pointer-events:none}
+.today-line::before{content:"";position:absolute;left:50%;bottom:100%;width:3px;height:76px;background:#e33b4e;transform:translateX(-50%);box-shadow:0 0 12px #e33b4e99}
+.sheet{position:relative;background:#1b1e25;border:2px solid #3a3e49;border-radius:14px;padding:12px;margin-top:4px}
+.sheet-inner{overflow:hidden;border-radius:10px}
+.weekbar{position:relative;height:56px;background:linear-gradient(180deg,#2a2d36,#20232b);border:2px solid #474c59;border-radius:10px;overflow:hidden}
+.wk{position:absolute;top:0;bottom:0;border-left:2px solid #474c59;padding:6px 0 0 10px}
+.wk:first-child{border-left:none}
+.wk-name{display:block;font-size:15px;font-weight:800;color:#e9edf5}
+.wk-range{display:block;font-size:13px;color:#9aa2b2;margin-top:2px}
+.months{position:relative;height:20px;margin:8px 2px 2px}
+.mo{position:absolute;font-size:12px;color:#7e8697;transform:translateX(2px)}
+.track{position:relative;background:#101218;border:2px solid #3a3e49;border-radius:10px;margin-top:6px;overflow:hidden}
+.grid-bg{position:absolute;inset:0;background-image:repeating-linear-gradient(90deg,#ffffff0d 0 1px,transparent 1px 100%);background-size:calc(100%/6) 100%}
+.guide{position:absolute;top:0;bottom:0;width:2px;background:#ffffff14}
+.bar{position:absolute;height:48px;border:2px solid;border-radius:26px;display:flex;align-items:center;gap:10px;padding:0 16px;min-width:0;overflow:hidden;box-shadow:0 3px 10px #0008;transition:transform .12s,box-shadow .12s}
+.bar:hover{transform:translateY(-2px);box-shadow:0 6px 18px #000a;z-index:40}
+.b-type{font-size:13px;font-weight:800;white-space:nowrap;opacity:.95}
+.b-title{flex:1 1 auto;font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.b-dur{font-size:12px;white-space:nowrap;opacity:.88;background:#00000038;padding:3px 9px;border-radius:8px}
+.b-src{font-size:12px;white-space:nowrap;background:#00000045;padding:3px 8px;border-radius:8px}
+.b-cont{font-size:11px;font-weight:800;white-space:nowrap;background:#ffffff26;border:1px dashed #ffffff66;padding:2px 7px;border-radius:7px;letter-spacing:1px}
+.marks{position:relative;margin-top:14px;padding:10px 12px;background:#171a21;border:2px solid #33363f;border-radius:12px}
+.marks h3{font-size:14px;color:#9aa2b2;font-weight:700;margin-bottom:10px}
+.mark{display:inline-flex;align-items:center;gap:8px;border:2px solid;border-radius:20px;padding:6px 14px;margin:0 10px 10px 0;font-size:13px;background:#1e222b}
+.m-dot{width:9px;height:9px;border-radius:50%}
+.m-txt{max-width:560px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.legend{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center;margin-top:18px;padding-top:16px;border-top:2px solid #2b2e37;font-size:13px;color:#9aa2b2}
+.legend b{color:#e9edf5}
+.chip{display:inline-flex;align-items:center;gap:7px;background:#1e222b;border:2px solid #33363f;border-radius:20px;padding:5px 13px;color:#cfd6e2}
+.dot{width:10px;height:10px;border-radius:50%}
+.src-official{color:#7ee0a0}.src-verified{color:#f0cd5f}.src-doubtful{color:#fa8a8a}
+.foot{margin-top:16px;color:#69707e;font-size:12px;line-height:1.7}
+.foot code{background:#1e222b;padding:2px 6px;border-radius:5px;color:#9fb4e8}
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="cal-head">
+    <div class="cal-title">崩坏：星穹铁道 · 活动日历<span>v4.6 版本 · 2026-09-19 ~ 2026-10-30</span></div>
+    <div class="today-row"><span class="today-flag">今天 10/03 星期六</span></div>
+  </div>
+
+  <div class="sheet">
+    <div class="sheet-inner">
+      <div class="weekbar"><div class="wk" style="left:0.0000%;width:16.6667%"><span class="wk-name">第一周</span><span class="wk-range">09/19 ~ 09/25</span></div><div class="wk" style="left:16.6667%;width:16.6667%"><span class="wk-name">第二周</span><span class="wk-range">09/26 ~ 10/02</span></div><div class="wk" style="left:33.3333%;width:16.6667%"><span class="wk-name">第三周</span><span class="wk-range">10/03 ~ 10/09</span></div><div class="wk" style="left:50.0000%;width:16.6667%"><span class="wk-name">第四周</span><span class="wk-range">10/10 ~ 10/16</span></div><div class="wk" style="left:66.6667%;width:16.6667%"><span class="wk-name">第五周</span><span class="wk-range">10/17 ~ 10/23</span></div><div class="wk" style="left:83.3333%;width:16.6667%"><span class="wk-name">第六周</span><span class="wk-range">10/24 ~ 10/30</span></div></div>
+      <div class="months"><span class="mo" style="left:0.0000%">2026年9月</span><span class="mo" style="left:28.5714%">2026年10月</span></div>
+      <div class="track" style="height:480px">
+        <div class="grid-bg"></div>
+        <i class="guide" style="left:16.6667%"></i><i class="guide" style="left:33.3333%"></i><i class="guide" style="left:50.0000%"></i><i class="guide" style="left:66.6667%"></i><i class="guide" style="left:83.3333%"></i>
+        <div class="bar group" style="left:33.3333%;width:66.6667%;top:0px;background:linear-gradient(90deg,#ff8a1f,#ffc457);border-color:#ffb347;color:#fff2d6" title="活动跃迁「出自深海的珍珠」（整版本）：限定5★真珠（欢愉·冰）+ 限定5★光锥「献给明日的色彩（欢愉）」 / 第一期复刻跃迁「花盛之裁者」（至 10/14）：限定5★绯英（欢愉·物理）"><span class="b-type" style="color:#ffb347">◆ 跃迁</span><span class="b-title">卡池 2 项 · 限定5★真珠（欢愉·冰）+ 限定5★光锥「献给明日的色彩（欢愉）」</span><span class="b-dur">10/03 ~ 11/10（39天） · 超出窗口</span><span class="b-src src-official">🟢1</span><span class="b-src src-verified">🟡1</span><span class="b-src src-doubtful">🔴0</span><span class="b-cont">续</span></div><div class="bar" style="left:33.3333%;width:66.6667%;top:58px;background:linear-gradient(90deg,#ff4d6d,#ff8fa3);border-color:#ff7a96;color:#ffd9e1" title="2026-10-03 ~ 2026-11-10（窗口外延续） | v4.6「月升之前，与兽共舞」版本持续中（09/28 上线，本周无新版本；4.7 前瞻预计临近）"><span class="b-type" style="color:#ff7a96">★ 版本</span><span class="b-title">v4.6「月升之前，与兽共舞」版本持续中（09/28 上线，本周无新版本；4.7 前瞻预计临近）</span><span class="b-dur">10/03 ~ 11/10（39天）· 超出窗口</span><span class="b-cont">续</span><span class="b-src src-warn" title="多方印证">🟡</span></div><div class="bar" style="left:33.3333%;width:66.6667%;top:116px;background:linear-gradient(90deg,#f07a16,#ffb04d);border-color:#ff9e2c;color:#fff3e0" title="2026-10-03 ~ 2026-11-10（窗口外延续） | 登录活动「巡星之礼」进行中：累计登录最多可领星轨专票×10（至 11/10 03:59）"><span class="b-type" style="color:#ff9e2c">● 活动</span><span class="b-title">登录活动「巡星之礼」进行中：累计登录最多可领星轨专票×10（至 11/10 03:59）</span><span class="b-dur">10/03 ~ 11/10（39天）· 超出窗口</span><span class="b-cont">续</span><span class="b-src src-warn" title="多方印证">🟡</span></div><div class="bar" style="left:33.3333%;width:66.6667%;top:174px;background:linear-gradient(90deg,#f07a16,#ffb04d);border-color:#ff9e2c;color:#fff3e0" title="2026-10-03 ~ 2026-11-11（窗口外延续） | 版本活动「爱、幽灵与机器人」进行中（至 11/11 03:59）"><span class="b-type" style="color:#ff9e2c">● 活动</span><span class="b-title">版本活动「爱、幽灵与机器人」进行中（至 11/11 03:59）</span><span class="b-dur">10/03 ~ 11/11（40天）· 超出窗口</span><span class="b-cont">续</span><span class="b-src src-ok" title="官方确认">🟢</span></div><div class="bar" style="left:33.3333%;width:66.6667%;top:232px;background:linear-gradient(90deg,#f07a16,#ffb04d);border-color:#ff9e2c;color:#fff3e0" title="2026-10-03 ~ 2026-11-11（窗口外延续） | 版本活动「愿力全开！打倒贪饕！」进行中：星琼×500、潮玩礼券×18（至 11/11 06:00）"><span class="b-type" style="color:#ff9e2c">● 活动</span><span class="b-title">版本活动「愿力全开！打倒贪饕！」进行中：星琼×500、潮玩礼券×18（至 11/11 06:00）</span><span class="b-dur">10/03 ~ 11/11（40天）· 超出窗口</span><span class="b-cont">续</span><span class="b-src src-warn" title="多方印证">🟡</span></div><div class="bar" style="left:33.3333%;width:66.6667%;top:290px;background:linear-gradient(90deg,#f07a16,#ffb04d);border-color:#ff9e2c;color:#fff3e0" title="2026-10-03 ~ 2026-11-09（窗口外延续） | 「无名勋礼」4.6期进行中（至 11/09 03:59）"><span class="b-type" style="color:#ff9e2c">● 活动</span><span class="b-title">「无名勋礼」4.6期进行中（至 11/09 03:59）</span><span class="b-dur">10/03 ~ 11/09（38天）· 超出窗口</span><span class="b-cont">续</span><span class="b-src src-ok" title="官方确认">🟢</span></div><div class="bar" style="left:33.3333%;width:66.6667%;top:348px;background:linear-gradient(90deg,#3f6fd8,#7aa2ff);border-color:#6f95ff;color:#e2ebff" title="2026-10-03 ~ 2026-11-11（窗口外延续） | 新时装在售：风堇「暖棉晴空」、绯英「月华初绽」（限时 2680 星琼）"><span class="b-type" style="color:#6f95ff">■ 公告</span><span class="b-title">新时装在售：风堇「暖棉晴空」、绯英「月华初绽」（限时 2680 星琼）</span><span class="b-dur">10/03 ~ 11/11（40天）· 超出窗口</span><span class="b-cont">续</span><span class="b-src src-warn" title="多方印证">🟡</span></div><div class="bar" style="left:33.3333%;width:28.5714%;top:406px;background:linear-gradient(90deg,#3f6fd8,#7aa2ff);border-color:#6f95ff;color:#e2ebff" title="2026-10-03 ~ 2026-10-14 | 4★概率提升（第一期）：青雀（智识·量子）、雪衣（毁灭·量子）、米沙（毁灭·冰）"><span class="b-type" style="color:#6f95ff">■ 公告</span><span class="b-title">4★概率提升（第一期）：青雀（智识·量子）、雪衣（毁灭·量子）、米沙（毁灭·冰）</span><span class="b-dur">10/03 ~ 10/14（12天）</span><span class="b-src src-warn" title="多方印证">🟡</span></div>
+        <i class="today-line" style="left:34.5238%"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="marks"><h3>单日节点（无跨度）</h3><div class="mark" style="left:34.5238%;border-color:#6f95ff;color:#e2ebff" title="《绝区零》联动「Ellen」「Astra Yao」确认于 4.8 版本加入（前瞻公布）"><span class="m-dot" style="background:#6f95ff"></span><span class="m-txt">■ 《绝区零》联动「Ellen」「Astra Yao」确认于 4.8 版本加入（前瞻公布）</span><span class="b-src src-warn">🟡</span></div><div class="mark" style="left:34.5238%;border-color:#6f95ff;color:#e2ebff" title="「星际和平盛典：一镜到底」「星际幻宠」「星际碰碰好搭档！」等 4.6 活动排期未确认，预计本周之后陆续开放"><span class="m-dot" style="background:#6f95ff"></span><span class="m-txt">■ 「星际和平盛典：一镜到底」「星际幻宠」「星际碰碰好搭档！」等 4.6 活动排期未确认，预计本周之后陆续开放</span><span class="b-src src-bad">🔴</span></div><div class="mark" style="left:39.2857%;border-color:#6f95ff;color:#e2ebff" title="每周一 04:00 周常刷新：模拟宇宙/差分宇宙周积分、周本「历战余响」次数、委托与周活跃"><span class="m-dot" style="background:#6f95ff"></span><span class="m-txt">■ 每周一 04:00 周常刷新：模拟宇宙/差分宇宙周积分、周本「历战余响」次数、委托与周活跃</span><span class="b-src src-ok">🟢</span></div><div class="mark" style="left:39.2857%;border-color:#6f95ff;color:#e2ebff" title="「逐光捡金」本期结算窗口：混沌回忆/虚构叙事/末日幻影按官方排期轮替（具体当期以游戏内为准）"><span class="m-dot" style="background:#6f95ff"></span><span class="m-txt">■ 「逐光捡金」本期结算窗口：混沌回忆/虚构叙事/末日幻影按官方排期轮替（具体当期以游戏内为准）</span><span class="b-src src-bad">🔴</span></div></div>
+
+  <div class="legend">
+    <span class="chip"><span class="dot" style="background:#7ee0a0"></span>🟢 官方确认 <b>4</b></span>
+    <span class="chip"><span class="dot" style="background:#f0cd5f"></span>🟡 多方印证 <b>7</b></span>
+    <span class="chip"><span class="dot" style="background:#fa8a8a"></span>🔴 存疑待核 <b>2</b></span>
+    <span class="chip">时长条 <b>9</b> 项 · 单日节点 <b>4</b> 项</span>
+  </div>
+
+  <div class="foot">
+    时间轴 <code>2026-09-19</code> ~ <code>2026-10-30</code>（6 周 / 42 天）· 红线为今日（2026-10-03）。<br>
+    部分事件在 <code>2026-10-30</code> 之后仍在持续，已在时间轴末端裁剪并标注「超出窗口」。<br>
+    数据来源：HoYoverse 官方版本更新说明与公告、17173（公众号官方转载）、GameWith / GameMarket / Notebookcheck / GameTrader 交叉核对。<br>
+    标 🔴 的条目为信源之间名称或时长不一致，请以游戏内公告为准；结束时间标「未确认」的条目由标题文本推断，可能存在偏差。<br>
+    生成时间 2026-10-03 · 由 <code>hsr_weekly_html.py</code> 生成
+  </div>
+</div>
+</body>
+</html>
