@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""Upload the HSR weekly calendar + events to the GitHub archive repo.
+"""Upload the HSR month calendar + events to the GitHub archive repo.
 
 Usage:
-    python hsr_upload.py YYYY MM DD            # upload week (DD = week_start Saturday)
-    python hsr_upload.py YYYY MM DD --dry-run  # resolve paths + token, print, upload nothing
+    python hsr_upload.py YYYY MM               # upload/refresh that month
+    python hsr_upload.py YYYY MM --dry-run     # resolve paths + token, print, upload nothing
     python hsr_upload.py --check-auth          # verify the token only
+
+One file set per month under YYYY/MM/, overwritten on every weekly run.
 
 Token resolution order (first hit wins):
     1. --token-file <path>
@@ -21,7 +23,7 @@ import os
 import sys
 import urllib.error
 import urllib.request
-from datetime import date
+from datetime import date, timedelta
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
@@ -153,17 +155,17 @@ def main():
         print("AUTH   : 失败 http=" + str(status) + " " + str(body))
         return 1
 
-    if len(nums) >= 3:
-        y, m, d = int(nums[0]), int(nums[1]), int(nums[2])
+    if len(nums) >= 2:
+        y, m = int(nums[0]), int(nums[1])
     else:
-        print("ERROR: 需要三个数字参数 YYYY MM DD（week_start，周六）")
+        print("ERROR: 需要参数 YYYY MM（月历所属年月）")
         return 2
-    ws = date(y, m, d)
-    if ws.weekday() != 5:
-        print("WARN   : %s 不是周六，按给定日期计算 ISO 周" % ws.isoformat())
-    iso = ws.isocalendar()
-    week_tag = "W%02d" % iso[1]
-    prefix = "%04d/%s" % (iso[0], week_tag)
+    if not 1 <= m <= 12:
+        print("ERROR: 月份超出范围: %d" % m)
+        return 2
+    month_start = date(y, m, 1)
+    month_end = date(y + (m == 12), (m % 12) + 1, 1) - timedelta(days=1)
+    prefix = "%04d/%02d" % (y, m)
 
     files = [
         (prefix + "/calendar.png", os.path.join(HERE, "calendar.png")),
@@ -171,10 +173,10 @@ def main():
         (prefix + "/events.json", os.path.join(HERE, "events.json")),
     ]
     missing_optional = {prefix + "/calendar.html"}
-    msg = "chore(hsr): 周历 %s 归档（week_start %s, ISO %s/%s）" % (
-        week_tag, ws.isoformat(), iso[0], week_tag)
+    msg = "chore(hsr): 月历 %04d-%02d 刷新（%s ~ %s）" % (
+        y, m, month_start.isoformat(), month_end.isoformat())
     print("REPO   : " + REPO + "  branch=" + BRANCH)
-    print("TARGET : " + prefix + "/")
+    print("TARGET : " + prefix + "/   （每月一份，每周覆盖刷新）")
     print("COMMIT : " + msg)
     all_ok = True
     for remote, local in files:
