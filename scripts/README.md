@@ -1,41 +1,43 @@
 # scripts/
 
-《崩坏：星穹铁道》周历的生成与归档脚本。
+《崩坏：星穹铁道》**月历**的生成与归档脚本。
 
 ## 文件
 
 | 脚本 | 作用 |
 |---|---|
-| `hsr_weekly.py` | 读取事件 JSON，用 Pillow 生成周历图 `calendar.png` |
-| `hsr_weekly_html.py` | 生成游戏内「活动日历」风格的交互式 `calendar.html` |
-| `hsr_upload.py` | 通过 GitHub REST API 把产物推到 `YYYY/Wxx/` |
+| `hsr_monthly.py` | 读取事件 JSON，用 Pillow 生成月历图 `calendar.png`（月网格 + 整月时间轴） |
+| `hsr_monthly_html.py` | 生成同版式的交互式 `calendar.html`，红线按真实时间自动移动 |
+| `hsr_upload.py` | 通过 GitHub REST API 把三份产物推到 `YYYY/MM/` |
 
-> 注意：上传脚本原名 `upload_hsr_weekly.py`，因模块名会遮蔽标准库 `os`（`import os` 会解析到脚本自身导致循环导入）而更名。请勿改回。
+> **沿革**：本项目原为周历（`hsr_weekly.py` / `hsr_weekly_html.py`，按 `YYYY/Wxx/` 归档）。
+> 现已改为**月历 + 每周刷新**：产物落在 `YYYY/MM/`，每周六覆盖刷新当月；旧周历脚本已移除，
+> 历史归档 `2026/W38`、`2026/W39`、`2026/W40` 保留。
+> 上传脚本原名 `upload_hsr_weekly.py`，因模块名会遮蔽标准库 `os`（`import os` 解析到脚本自身造成循环导入）而更名，请勿改回。
 
 ## 依赖
 
-- Python 3，仅 `hsr_weekly.py` 需要 **Pillow**（另两个只用标准库）
-- 字体使用 Windows 自带 `msyh.ttc` / `simhei.ttf`，非 Windows 需自行替换 `FONT_CANDIDATES`
+- Python 3，仅 `hsr_monthly.py` 需要 **Pillow**（另两个只用标准库）
+- 字体使用 Windows 自带 `msyh.ttc` / `simhei.ttf`，非 Windows 需替换 `FONTS` 列表
 
 ## 凭据配置（必做）
 
-`hsr_upload.py` **不包含任何 token**，按以下顺序查找（首个命中即用）：
+`hsr_upload.py` **不含任何 token**，按序查找（首个命中即用）：
 
 1. `--token-file <路径>`
 2. 环境变量 `$HSR_GITHUB_TOKEN_FILE` 指向的文件
 3. 环境变量 `$GITHUB_TOKEN`
-4. 脚本同目录下的 `.hsr_token`
+4. 脚本同目录 `.hsr_token`
 5. `%USERPROFILE%\.dsh\secrets\hsr-github-token`（默认，推荐）
 
-创建默认凭据文件（PowerShell，Windows）：
+创建默认凭据文件（Windows PowerShell）：
 
 ```powershell
 $dir = Join-Path $env:USERPROFILE '.dsh\secrets'
 New-Item -ItemType Directory -Force -Path $dir | Out-Null
 $file = Join-Path $dir 'hsr-github-token'
-# 写入时不要带 BOM、不要带尾随换行
+# 不要带 BOM、不要带尾随换行
 [System.IO.File]::WriteAllText($file, '<你的 token>', (New-Object System.Text.UTF8Encoding($false)))
-# 收紧权限：禁用继承，仅保留当前用户可读
 icacls $file /inheritance:r
 icacls $file /grant:r "$($env:USERNAME):(R)"
 ```
@@ -48,76 +50,62 @@ printf '%s' '<你的 token>' > ~/.dsh/secrets/hsr-github-token
 chmod 600 ~/.dsh/secrets/hsr-github-token
 ```
 
-token 需要 `repo` 权限（或对目标仓库 contents 写权限）。
+token 需 `repo` 权限（或对目标仓库的 contents 写权限）。
 
 ## 用法
 
 ```bash
-PY=python                # 或你的解释器绝对路径
+PY=python                              # 或解释器绝对路径
 
-# 1) 生成周历图（参数为 week_start 的年月日，即该周的周六）
-$PY hsr_weekly.py 2026 9 26
-
-# 2) 生成活动日历视图
-$PY hsr_weekly_html.py 2026 9 26
-
-# 3) 自检凭据与仓库可达性（不写入任何内容）
-$PY hsr_upload.py --check-auth
-
-# 4) 空跑：只解析路径、凭据、提交信息
-$PY hsr_upload.py 2026 9 26 --dry-run
-
-# 5) 正式上传
-$PY hsr_upload.py 2026 9 26
+$PY hsr_monthly.py 2026 10             # 生成月历图 calendar.png
+$PY hsr_monthly_html.py 2026 10        # 生成月历视图 calendar.html
+$PY hsr_upload.py --check-auth         # 自检凭据与仓库可达性
+$PY hsr_upload.py 2026 10 --dry-run    # 空跑：只解析路径与提交信息
+$PY hsr_upload.py 2026 10              # 正式上传（覆盖刷新当月）
 ```
 
 环境变量可覆盖目标：`GITHUB_REPO`（默认 `Ayin6667/hsr-calendar`）、`GITHUB_BRANCH`（默认 `main`）。
 
-### `hsr_weekly_html.py` 选项
-
-| 选项 | 说明 |
-|---|---|
-| `--weeks N` | 时间轴覆盖周数，默认 `6`（即 42 天，与游戏内视图一致） |
-| `--anchor YYYY-MM-DD` | 以某天为基准对齐周网格，通常传版本更新日 |
-| `--start YYYY-MM-DD` | 直接指定时间轴起始日 |
-
-未指定时默认从「今天所在周的周三」往前两週开始，并把今天画成红色竖线。
-
 ## 输入数据
 
-两个生成脚本都读取**脚本同目录**下、以 week_start 命名的 `hsr_events_YYYY_MM_DD.json`：
+两个生成脚本都读取**脚本同目录**下、以年月命名的 `hsr_events_YYYY_MM.json`：
 
 ```json
 [
   {
-    "date": "2026-09-28",
-    "type": "version",
-    "end": "2026-11-10",
-    "title": "v4.6「月升之前，与兽共舞」版本更新上线",
-    "source": "official"
+    "date": "2026-10-14",
+    "end": "2026-11-04",
+    "type": "war",
+    "title": "4.6 下半复刻跃迁：限定5★千冶·刃（Mortenax Blade，火·虚无）",
+    "short": "下半 · 千冶刃",
+    "source": "verified"
   }
 ]
 ```
 
-- `date`：事件开始日（必填）
-- `type`：`version` | `war` | `light` | `activity` | `note`（决定配色与左侧类型标）
-- `end`：**可选**，事件结束日；有跨度的活动填上，HTML 时间轴据此画时长条
+- `date` 必填；`end` 可选，用于画时长条
+- `type`：`version` | `war` | `light` | `activity` | `note`
+- `short` 可选，月网格格子里显示的短标签（缺省则截断标题）
 - `source`：`official` 🟢 | `verified` 🟡 | `doubtful` 🔴
+- `ongoing: true` 表示**长期开放 / 常驻**：不计入逐日格子，单独列在「长期开放」一行，
+  时间轴按整月铺满
 
-若 `end` 缺失，`hsr_weekly_html.py` 会尝试从 `title` 里解析结束日期
-（支持 `至11/10 15:00`、`持续至9/28`、`(至11/10 03:59)` 等形式）；
-仍解析不到的条目退化为时间轴下方的「单日节点」。
+若 `end` 缺失，生成脚本会尝试从 `title` 里解析结束日期（支持 `至11/10 15:00`、`持续至9/28` 等形式）。
 
-`hsr_upload.py` 上传的是**同目录**的 `events.json`（仓库格式，缩进 2 空格），
-与 `hsr_events_*.json` 内容一致、仅格式不同，需分别生成。
+`hsr_upload.py` 上传的 `events.json` 与工作用数据内容一致，仅字段顺序规范化。
 
 ## 输出路径
 
 ```
-YYYY/Wxx/calendar.png     # 周历图
-YYYY/Wxx/calendar.html    # 活动日历视图
-YYYY/Wxx/events.json      # 事件数据
+YYYY/MM/calendar.png     # 月历图
+YYYY/MM/calendar.html    # 月历视图（红线按真实时间走动）
+YYYY/MM/events.json      # 事件数据
 ```
 
-`Wxx` 由 week_start 的 ISO 周序号推导（如 2026-09-26 → `2026/W39`）。
-`calendar.html` 若本地不存在会被跳过，不会导致上传失败。
+**每月一份，每周覆盖刷新**。`calendar.html` 若本地缺失会被跳过，不会导致上传失败。
+
+## 红色「当前时刻」线
+
+- `hsr_monthly.py`：按生成时的真实时刻定位（含日内小数，例如 10-04 20:56 → 12.50%）
+- `hsr_monthly_html.py`：除生成时定位外，页面内置脚本每 20 秒按北京时间重算一次，
+  页面长时间开着红线也会跟着走；跨零点时「今天」高亮格一并迁移
