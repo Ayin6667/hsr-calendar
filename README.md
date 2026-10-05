@@ -4,6 +4,21 @@
 
 ---
 
+### 🌐 线上地址
+
+| 地址 | 说明 |
+|---|---|
+| **[https://ayin.dpdns.org](https://ayin.dpdns.org)** | 自定义域名（Cloudflare Pages，自动跳当月） |
+| [https://hsr-calendar.pages.dev](https://hsr-calendar.pages.dev) | Cloudflare Pages 默认域名 |
+| [https://github.com/Ayin6667/hsr-calendar](https://github.com/Ayin6667/hsr-calendar) | 本仓库（归档源） |
+
+域名 `ayin.dpdns.org` 的 DNS 由 Cloudflare 托管，站点通过 Cloudflare Pages 发布，SSL 由
+Google Trust Services 签发。每周刷新后会自动重新部署，无需人工操作。
+
+> 提示：站点可能开启 Bot Fight Mode，用脚本抓取时请带正常浏览器 User-Agent；
+> `Python-urllib` 这类默认 UA 会被拦成 403。
+
+
 ### 📌 这是什么？
 
 本仓库归档《崩坏:星穹铁道》的**月度**游戏事件，每周自动刷新当月：
