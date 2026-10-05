@@ -27,11 +27,11 @@ CST = timezone(timedelta(hours=8))
 ROW_PITCH = 54
 
 TYPE_META = {
-    "version": ("版本", "★", "#ff4d6d"),
-    "war": ("跃迁", "◆", "#ff8a1f"),
-    "light": ("光锥", "◇", "#e8b40f"),
-    "activity": ("活动", "●", "#2fbf71"),
-    "note": ("公告", "■", "#3f6fd8"),
+    "version": ("版本", "★", "var(--c-version)"),
+    "war": ("跃迁", "◆", "var(--c-war)"),
+    "light": ("光锥", "◇", "var(--c-light)"),
+    "activity": ("活动", "●", "var(--c-activity)"),
+    "note": ("公告", "■", "var(--c-note)"),
 }
 SOURCE_META = {
     "official": ("🟢", "官方确认", "ok"),
@@ -39,55 +39,117 @@ SOURCE_META = {
     "doubtful": ("🔴", "存疑待核", "bad"),
 }
 DOW = ["一", "二", "三", "四", "五", "六", "日"]
+THEME_JS = (
+    "(function(){var K='hsr-theme',s=null;try{s=localStorage.getItem(K)}catch(e){}"
+    "var m=window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches;"
+    "document.documentElement.setAttribute('data-theme',s||(m?'light':'dark'));})();"
+)
+TOGGLE_JS = (
+    "(function(){var K='hsr-theme',r=document.documentElement,btn=document.getElementById('themeBtn');"
+    "function cur(){return r.getAttribute('data-theme')==='light'?'light':'dark';}"
+    "if(btn){btn.addEventListener('click',function(){"
+    "var n=cur()==='light'?'dark':'light';r.setAttribute('data-theme',n);"
+    "try{localStorage.setItem(K,n)}catch(e){}});}"
+    "if(window.matchMedia){var mq=window.matchMedia('(prefers-color-scheme: light)');"
+    "var h=function(e){var s=null;try{s=localStorage.getItem(K)}catch(x){}"
+    "if(!s){r.setAttribute('data-theme',e.matches?'light':'dark')}};"
+    "if(mq.addEventListener){mq.addEventListener('change',h)}else if(mq.addListener){mq.addListener(h)}}"
+    "})();"
+)
 CSS = """
+:root{
+  --bg:#0b0c10; --fg:#e9edf5; --dim:#9aa2b2; --faint:#6b7382;
+  --frame-bg:#14161c; --frame-bd:#33363f;
+  --panel:#171a21; --panel-bd:#33363f;
+  --cell-bg:#191c24; --cell-bd:#2f333d; --cell-pad:#12141a; --cell-pad-bd:#20232b;
+  --cell-today-bg:#221a1f; --cell-past-op:.55;
+  --dow-bg:#20232b; --dow-bd:#3a3e49;
+  --track-bg:#101218; --track-bd:#3a3e49;
+  --grid-line:rgba(255,255,255,.07); --day-line:rgba(255,255,255,.04);
+  --chip-bg:rgba(0,0,0,.22); --pill-bg:rgba(0,0,0,.26); --pill-bd:rgba(255,255,255,.40);
+  --divider:#2b2e37; --shadow:rgba(0,0,0,.45);
+  --accent:#ffc531; --red:#e33b4e; --red-ink:#ffffff; --red-glow:rgba(227,59,78,.27);
+  --weekend:#ffb347; --num:#c8cfdc; --today-num:#ff6b7d;
+  --c-version:#ff4d6d; --c-war:#ff8a1f; --c-light:#e8b40f; --c-activity:#2fbf71; --c-note:#3f6fd8;
+  --ok:#7ee0a0; --warn:#f0cd5f; --bad:#fa8a8a;
+  --bar-bg:#1e222b; --bar-ink:#e9edf5;
+  --code-bg:#1e222b; --code-fg:#9fb4e8;
+}
+[data-theme="light"]{
+  --bg:#eef1f7; --fg:#1b1f2a; --dim:#5b6478; --faint:#8b93a7;
+  --frame-bg:#ffffff; --frame-bd:#d5dbe6;
+  --panel:#f7f9fc; --panel-bd:#dbe1ec;
+  --cell-bg:#ffffff; --cell-bd:#e3e8f1; --cell-pad:#f1f4f9; --cell-pad-bd:#e6ebf3;
+  --cell-today-bg:#fff2f3; --cell-past-op:.52;
+  --dow-bg:#eef2f8; --dow-bd:#d5dbe6;
+  --track-bg:#f8fafd; --track-bd:#d5dbe6;
+  --grid-line:rgba(0,0,0,.07); --day-line:rgba(0,0,0,.04);
+  --chip-bg:rgba(0,0,0,.05); --pill-bg:rgba(255,255,255,.62); --pill-bd:rgba(0,0,0,.18);
+  --divider:#e0e5ee; --shadow:rgba(20,30,60,.14);
+  --accent:#b07d00; --red:#d92b3f; --red-ink:#ffffff; --red-glow:rgba(217,43,63,.22);
+  --weekend:#c2700a; --num:#3a4356; --today-num:#c9183c;
+  --c-version:#c9183c; --c-war:#b06400; --c-light:#856a00; --c-activity:#12854a; --c-note:#2a52b0;
+  --ok:#12854a; --warn:#8f7200; --bad:#bf2a2a;
+  --bar-bg:#ffffff; --bar-ink:#1b1f2a;
+  --code-bg:#eef2f8; --code-fg:#2a52b0;
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#0b0c10;color:#e9edf5;font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",system-ui,sans-serif;padding:24px;min-width:1420px}
-.frame{position:relative;background:#14161c;border:2px solid #33363f;border-radius:16px;padding:20px 22px 24px}
+body{background:var(--bg);color:var(--fg);font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",system-ui,sans-serif;padding:24px;min-width:1420px;transition:background .18s,color .18s}
+.theme-toggle{position:fixed;top:18px;right:18px;z-index:9999;display:inline-flex;align-items:center;gap:8px;background:var(--panel);color:var(--fg);border:2px solid var(--panel-bd);border-radius:22px;padding:8px 15px;font-family:inherit;font-size:13px;font-weight:700;line-height:1;cursor:pointer;box-shadow:0 3px 14px var(--shadow);transition:background .18s,border-color .18s,transform .12s}
+.theme-toggle:hover{transform:translateY(-1px);border-color:var(--accent)}
+.theme-toggle svg{display:block;flex:0 0 auto}
+.tt-moon{display:none}
+[data-theme="light"] .tt-sun{display:none}
+[data-theme="light"] .tt-moon{display:block}
+.tt-lbl::after{content:"浅色"}
+[data-theme="light"] .tt-lbl::after{content:"深色"}
+.frame{position:relative;background:var(--frame-bg);border:2px solid var(--frame-bd);border-radius:16px;padding:20px 22px 24px;transition:background .18s,border-color .18s}
 .head{display:flex;flex-direction:column;align-items:center;gap:9px;margin-bottom:16px}
 .title{font-size:22px;font-weight:800}
-.title span{color:#7e8697;font-size:13px;font-weight:600;margin-left:12px}
-.nowbadge{background:#e33b4e;color:#fff;font-size:15px;font-weight:800;padding:7px 20px;border-radius:9px;white-space:nowrap}
+.title span{color:var(--dim);font-size:13px;font-weight:600;margin-left:12px}
+.nowbadge{background:var(--red);color:var(--red-ink);font-size:15px;font-weight:800;padding:7px 20px;border-radius:9px;white-space:nowrap}
 .dow{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:8px}
-.dow div{background:#20232b;border:2px solid #3a3e49;border-radius:8px;text-align:center;padding:7px 0;font-size:14px;font-weight:700;color:#9aa2b2}
-.dow div.we{color:#ffb347}
+.dow div{background:var(--dow-bg);border:2px solid var(--dow-bd);border-radius:8px;text-align:center;padding:7px 0;font-size:14px;font-weight:700;color:var(--dim);transition:background .18s,border-color .18s}
+.dow div.we{color:var(--weekend)}
 .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
-.cell{position:relative;min-height:118px;background:#191c24;border:2px solid #2f333d;border-radius:10px;padding:7px 8px 9px;display:flex;flex-direction:column;gap:4px}
-.cell.pad{background:#12141a;border-color:#20232b}
-.cell.past{opacity:.55}
-.cell.today{border-color:#e33b4e;box-shadow:0 0 0 2px #e33b4e44 inset;background:#221a1f}
-.dnum{font-size:15px;font-weight:800;color:#c8cfdc}
-.cell.today .dnum{color:#ff6b7d}
-.cell.we .dnum{color:#ffb347}
-.dnum small{font-size:11px;color:#6b7382;font-weight:600;margin-left:5px}
+.cell{position:relative;min-height:118px;background:var(--cell-bg);border:2px solid var(--cell-bd);border-radius:10px;padding:7px 8px 9px;display:flex;flex-direction:column;gap:4px;transition:background .18s,border-color .18s}
+.cell.pad{background:var(--cell-pad);border-color:var(--cell-pad-bd)}
+.cell.past{opacity:var(--cell-past-op)}
+.cell.today{border-color:var(--red);box-shadow:inset 0 0 0 2px var(--red-glow);background:var(--cell-today-bg)}
+.dnum{font-size:15px;font-weight:800;color:var(--num)}
+.cell.today .dnum{color:var(--today-num)}
+.cell.we .dnum{color:var(--weekend)}
+.dnum small{font-size:11px;color:var(--faint);font-weight:600;margin-left:5px}
 .chips{display:flex;flex-direction:column;gap:3px}
-.chip{font-size:11.5px;line-height:1.35;padding:2px 6px;border-radius:5px;border-left:3px solid;background:#00000038;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.more{font-size:11px;color:#6b7382}
+.chip{font-size:11.5px;line-height:1.35;padding:2px 6px;border-radius:5px;border-left:3px solid var(--tc);background:var(--chip-bg);color:var(--tc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.more{font-size:11px;color:var(--faint)}
 .spans{margin-top:auto;display:flex;flex-direction:column;gap:2px}
 .spans i{display:block;height:3px;border-radius:2px;opacity:.85}
-.tlwrap{margin-top:20px;background:#171a21;border:2px solid #33363f;border-radius:12px;padding:14px 16px 18px}
+.tlwrap{margin-top:20px;background:var(--panel);border:2px solid var(--panel-bd);border-radius:12px;padding:14px 16px 18px;transition:background .18s,border-color .18s}
 .tlhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-.tlhead h3{font-size:15px;font-weight:800;color:#e9edf5}
-.tlhead span{font-size:12px;color:#7e8697}
-.tl{position:relative;border:2px solid #3a3e49;border-radius:8px;background:#101218;overflow:hidden}
-.tl .g{position:absolute;top:0;bottom:0;width:1px;background:#ffffff12}
-.tl .day{position:absolute;top:0;bottom:0;border-left:1px solid #ffffff0a}
-.tlbar{position:absolute;height:38px;border:2px solid;border-radius:20px;display:flex;align-items:center;gap:8px;padding:0 12px;overflow:hidden;box-shadow:0 2px 8px #0007}
-.tlbar .t{font-size:11px;font-weight:800;white-space:nowrap}
+.tlhead h3{font-size:15px;font-weight:800;color:var(--fg)}
+.tlhead span{font-size:12px;color:var(--dim)}
+.tl{position:relative;border:2px solid var(--track-bd);border-radius:8px;background:var(--track-bg);overflow:hidden;transition:background .18s,border-color .18s}
+.tl .g{position:absolute;top:0;bottom:0;width:1px;background:var(--grid-line)}
+.tl .day{position:absolute;top:0;bottom:0;border-left:1px solid var(--day-line)}
+.tlbar{position:absolute;height:38px;border:2px solid var(--tc);border-left-width:7px;border-radius:20px;display:flex;align-items:center;gap:8px;padding:0 12px;overflow:hidden;background:var(--bar-bg);color:var(--bar-ink);box-shadow:0 2px 8px var(--shadow);transition:background .18s,transform .12s}
+.tlbar:hover{transform:translateY(-1px);z-index:30}
+.tlbar .t{font-size:11px;font-weight:800;white-space:nowrap;color:var(--tc)}
 .tlbar .n{flex:1 1 auto;font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tlbar .d{font-size:11px;white-space:nowrap;background:#00000042;padding:2px 7px;border-radius:6px;opacity:.9}
-.tlbar .c{font-size:10px;font-weight:800;background:#ffffff26;border:1px dashed #ffffff66;padding:1px 5px;border-radius:5px}
+.tlbar .d{font-size:11px;white-space:nowrap;background:var(--pill-bg);border:1px solid var(--pill-bd);padding:2px 7px;border-radius:6px}
+.tlbar .c{font-size:10px;font-weight:800;background:var(--pill-bg);border:1px dashed var(--pill-bd);padding:1px 5px;border-radius:5px}
 .ticks{position:relative;height:18px;margin-top:5px}
-.ticks span{position:absolute;font-size:11px;color:#6b7382;transform:translateX(-50%)}
-.nowline{position:absolute;top:0;bottom:0;width:3px;background:#e33b4e;transform:translateX(-50%);box-shadow:0 0 12px #e33b4e99;z-index:40;pointer-events:none}
-.longterm{margin-top:14px;background:#171a21;border:2px solid #33363f;border-radius:12px;padding:11px 14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.longterm b{font-size:12.5px;color:#9aa2b2;margin-right:6px}
-.lt{font-size:12px;border:1px solid;border-radius:16px;padding:4px 11px;background:#1e222b}
-.legend{display:flex;flex-wrap:wrap;gap:9px 20px;align-items:center;margin-top:16px;padding-top:14px;border-top:2px solid #2b2e37;font-size:12.5px;color:#9aa2b2}
-.chip2{display:inline-flex;align-items:center;gap:7px;background:#1e222b;border:2px solid #33363f;border-radius:18px;padding:4px 12px;color:#cfd6e2}
+.ticks span{position:absolute;font-size:11px;color:var(--faint);transform:translateX(-50%)}
+.nowline{position:absolute;top:0;bottom:0;width:3px;background:var(--red);transform:translateX(-50%);box-shadow:0 0 12px var(--red);z-index:40;pointer-events:none}
+.longterm{margin-top:14px;background:var(--panel);border:2px solid var(--panel-bd);border-radius:12px;padding:11px 14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;transition:background .18s,border-color .18s}
+.longterm b{font-size:12.5px;color:var(--dim);margin-right:6px}
+.lt{font-size:12px;border:1px solid var(--tc);border-radius:16px;padding:4px 11px;background:var(--bar-bg);color:var(--tc)}
+.legend{display:flex;flex-wrap:wrap;gap:9px 20px;align-items:center;margin-top:16px;padding-top:14px;border-top:2px solid var(--divider);font-size:12.5px;color:var(--dim)}
+.chip2{display:inline-flex;align-items:center;gap:7px;background:var(--panel);border:2px solid var(--panel-bd);border-radius:18px;padding:4px 12px;color:var(--fg);transition:background .18s,border-color .18s}
 .dot{width:10px;height:10px;border-radius:50%}
-.ok{color:#7ee0a0}.warn{color:#f0cd5f}.bad{color:#fa8a8a}
-.foot{margin-top:14px;color:#69707e;font-size:12px;line-height:1.75}
-.foot code{background:#1e222b;padding:2px 6px;border-radius:5px;color:#9fb4e8}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad)}
+.foot{margin-top:14px;color:var(--faint);font-size:12px;line-height:1.75}
+.foot code{background:var(--code-bg);padding:2px 6px;border-radius:5px;color:var(--code-fg)}
 """
 
 
@@ -181,8 +243,8 @@ def main():
             if it["end"] > it["start"]:
                 txt += " →%d/%d" % (it["end"].month, it["end"].day)
             chips.append(
-                '<span class="chip" style="border-color:%s;color:%s" title="%s">%s %s</span>'
-                % (col, col, html.escape(it["ev"]["title"]), glyph, html.escape(txt))
+                '<span class="chip" style="--tc:%s" title="%s">%s %s</span>'
+                % (col, html.escape(it["ev"]["title"]), glyph, html.escape(txt))
             )
         if len(starts) > 3:
             chips.append('<span class="more">+%d 项</span>' % (len(starts) - 3))
@@ -244,14 +306,13 @@ def main():
             elif lead:
                 dur += " · 月初前已开"
             bars_html.append(
-                '<div class="tlbar" style="left:%.4f%%;width:%.4f%%;top:%dpx;'
-                'background:linear-gradient(180deg,%s33,%s18);border-color:%s;color:#e9edf5" title="%s">'
-                '%s<span class="t" style="color:%s">%s %s</span>'
+                '<div class="tlbar" style="left:%.4f%%;width:%.4f%%;top:%dpx;--tc:%s" title="%s">'
+                '%s<span class="t">%s %s</span>'
                 '<span class="n">%s</span><span class="d">%s</span>%s</div>'
-                % (s_f * 100, max(1.6, (e_f - s_f) * 100), r * ROW_PITCH, col, col, col,
+                % (s_f * 100, max(1.6, (e_f - s_f) * 100), r * ROW_PITCH, col,
                    html.escape(ev["title"]),
                    '<span class="c">续</span>' if lead else "",
-                   col, glyph, label, html.escape(txt), dur,
+                   glyph, label, html.escape(txt), dur,
                    '<span class="c">续</span>' if tail else "")
             )
     tl_h = max(1, len(rows_packed)) * ROW_PITCH + 10
@@ -261,9 +322,8 @@ def main():
     lt_html = ""
     if longterm:
         chips2 = "".join(
-            '<span class="lt" style="border-color:%s;color:%s">%s %s</span>'
+            '<span class="lt" style="--tc:%s">%s %s</span>'
             % (TYPE_META.get(it["ev"]["type"], TYPE_META["note"])[2],
-               TYPE_META.get(it["ev"]["type"], TYPE_META["note"])[2],
                TYPE_META.get(it["ev"]["type"], TYPE_META["note"])[1],
                html.escape(it["ev"].get("short") or it["ev"]["title"][:10]))
             for it in longterm
@@ -292,8 +352,11 @@ def main():
     doc = """<!DOCTYPE html>
 <html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>崩坏：星穹铁道 月历 · @@MONTH@@</title><style>@@CSS@@</style></head>
-<body><div class="frame">
+<title>崩坏：星穹铁道 月历 · @@MONTH@@</title><style>@@CSS@@</style>
+<script>@@THEMEJS@@</script></head>
+<body>
+<button id="themeBtn" class="theme-toggle" type="button" aria-label="切换浅色 / 深色模式" title="切换浅色 / 深色模式"><svg class="tt-sun" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.4v2.6M12 19v2.6M2.4 12h2.6M19 12h2.6M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M18.7 5.3l-1.8 1.8M7.1 16.9l-1.8 1.8"/></svg><svg class="tt-moon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.6A8.6 8.6 0 1 1 9.4 3.5a7 7 0 0 0 11.1 11.1z"/></svg><span class="tt-lbl"></span></button>
+<div class="frame">
   <div class="head">
     <div class="title">崩坏：星穹铁道 · 月历<span>@@MONTH@@ · 每周六刷新 · 数据截至 @@CLOCK@@（北京时间）</span></div>
     <div class="nowbadge">今天 <span id="nowtxt">@@TODAY@@</span></div>
@@ -311,9 +374,9 @@ def main():
   @@LONGTERM@@
 
   <div class="legend">
-    <span class="chip2"><span class="dot" style="background:#7ee0a0"></span>🟢 官方确认 <b>@@NOFF@@</b></span>
-    <span class="chip2"><span class="dot" style="background:#f0cd5f"></span>🟡 多方印证 <b>@@NVER@@</b></span>
-    <span class="chip2"><span class="dot" style="background:#fa8a8a"></span>🔴 存疑待核 <b>@@NDOU@@</b></span>
+    <span class="chip2"><span class="dot" style="background:var(--ok)"></span>🟢 官方确认 <b>@@NOFF@@</b></span>
+    <span class="chip2"><span class="dot" style="background:var(--warn)"></span>🟡 多方印证 <b>@@NVER@@</b></span>
+    <span class="chip2"><span class="dot" style="background:var(--bad)"></span>🔴 存疑待核 <b>@@NDOU@@</b></span>
     <span class="chip2">事件 <b>@@NEV@@</b> 项 · 时间轴 <b>@@NBAR@@</b> 条</span>
   </div>
 
@@ -350,6 +413,7 @@ def main():
   setInterval(tick, 20000);
 })();
 </script>
+<script>@@TOGGLEJS@@</script>
 </body></html>
 """
 
@@ -371,6 +435,7 @@ def main():
         "@@NEV@@": str(len(events)), "@@NBAR@@": str(len(bars_in)),
         "@@MS@@": m_start.isoformat(), "@@ME@@": m_end.isoformat(), "@@NDAYS@@": str(n_days),
         "@@STARTMS@@": str(start_ms), "@@SPANMS@@": str(span_ms),
+        "@@THEMEJS@@": THEME_JS, "@@TOGGLEJS@@": TOGGLE_JS,
         "@@DOWCHARS@@": "".join(DOW),
     }
     for k, v in repl.items():
