@@ -109,3 +109,37 @@ YYYY/MM/events.json      # 事件数据
 - `hsr_monthly.py`：按生成时的真实时刻定位（含日内小数，例如 10-04 20:56 → 12.50%）
 - `hsr_monthly_html.py`：除生成时定位外，页面内置脚本每 20 秒按北京时间重算一次，
   页面长时间开着红线也会跟着走；跨零点时「今天」高亮格一并迁移
+
+## 部署到 Cloudflare Pages
+
+`deploy_cf.py` 把仓库里的网页产物直传到一个 Cloudflare Pages 项目（不需要构建步骤、不需要 `wrangler.toml`）。
+
+**凭据**（与 GitHub token 分开保存）：`%USERPROFILE%\.dsh\secrets\cloudflare.json`
+
+```json
+{"api_token": "<权限：Account -> Cloudflare Pages -> Edit>", "account_id": "<可选，缺省则自动探测>"}
+```
+
+> 注意：Cloudflare **账户级** API token 调 `/user/tokens/verify` 会返回 `401 Invalid API Token`，
+> 这是**正常现象**（该端点只校验用户级 token）。`deploy_cf.py` 因此改用 `/accounts/...` 端点校验。
+
+```bash
+$PY deploy_cf.py --check     # 校验凭据、解析 account_id、确认 Pages 权限
+$PY deploy_cf.py --build     # 只装配 ./_site（不需要凭据）
+$PY deploy_cf.py             # 装配并部署（首次会自动创建项目）
+```
+
+站点内容 = 仓库的 `index.html` + `2026/**`（html/json/png）。装配方式是用 GitHub API 镜像仓库到
+`_site/`（raw media type + 重试；`codeload` 的 tarball 接口在本机会被重置连接，故不用），再交给 wrangler 上传。
+默认项目名 `hsr-calendar`，可用 `--project` 或 `$CLOUDFLARE_PAGES_PROJECT` 覆盖。
+
+### 自定义域名
+
+Cloudflare Pages 的域名绑定在**控制台或 API** 完成，**不需要仓库里的 `CNAME` 文件**（那是 GitHub Pages 的机制）：
+
+- 域名 DNS 已在 Cloudflare：项目 → Custom domains → 添加，DNS 记录会自动创建
+- DNS 在别处：在该处添加 CNAME 指向 `<项目名>.pages.dev`
+
+### 部署产物忽略项
+
+`_site/` 与 `cloudflare.json` 已在 `.gitignore` 中忽略。
