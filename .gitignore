@@ -1,7 +1,13 @@
+# 本地密钥：绝不提交
+.hsr_token
+*.token
+token.txt
+cloudflare.json
+
+# 部署构建产物
+_site/
+_repo.tar.gz
+
+# Python
 __pycache__/
 *.pyc
-*.pyo
-/tmp/hsr_*
-.venv/
-env/
-*.log
