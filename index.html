@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>崩坏：星穹铁道 月历</title><style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;background:#0b0c10;color:#e9edf5;
+font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",system-ui,sans-serif;
+display:flex;align-items:center;justify-content:center;padding:32px}
+.wrap{width:100%;max-width:560px;background:#14161c;border:2px solid #33363f;border-radius:16px;padding:34px 30px}
+h1{font-size:23px;font-weight:800;margin-bottom:8px}
+.sub{color:#7e8697;font-size:13.5px;margin-bottom:22px;line-height:1.7}
+a.btn{display:block;background:#ffc531;color:#1a1c22;font-weight:800;font-size:16px;
+text-align:center;padding:14px;border-radius:11px;text-decoration:none;margin-bottom:18px}
+a.btn:hover{background:#ffd35c}
+.hint{color:#6b7382;font-size:12.5px;margin-bottom:10px}
+ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px}
+li a{display:inline-block;background:#1e222b;border:2px solid #33363f;border-radius:18px;
+padding:6px 14px;color:#cfd6e2;text-decoration:none;font-size:13px}
+li a:hover{border-color:#7aa2ff;color:#fff}
+.foot{margin-top:22px;padding-top:16px;border-top:2px solid #2b2e37;color:#69707e;font-size:12px;line-height:1.8}
+</style></head>
+<body><div class="wrap">
+  <h1>崩坏：星穹铁道 · 月历</h1>
+  <div class="sub">每月一份，每周六刷新。红线标的是当前真实时刻。</div>
+  <a class="btn" id="go" href="2026/10/calendar.html">打开最新月历</a>
+  <div class="hint">全部月份</div>
+  <ul><li><a href="2026/10/calendar.html">2026/10</a></li></ul>
+  <div class="foot" id="foot">正在跳转到本月月历…</div>
+</div>
+<script>
+(function () {
+  var MONTHS = ["2026/10"];
+  var LATEST = "2026/10";
+  var go = document.getElementById('go');
+  var foot = document.getElementById('foot');
+  function ym() {
+    var d = new Date(Date.now() + 8 * 3600 * 1000);   // 北京时间
+    var m = d.getUTCMonth() + 1;
+    return d.getUTCFullYear() + '/' + (m < 10 ? '0' + m : '' + m);
+  }
+  if (MONTHS.indexOf(LATEST) < 0) { MONTHS.unshift(LATEST); }
+  var want = ym();
+  var target = (MONTHS.indexOf(want) >= 0 ? want : LATEST) + '/calendar.html';
+  go.setAttribute('href', target);
+  foot.textContent = '目标月份 ' + (MONTHS.indexOf(want) >= 0 ? want : LATEST + '（当月尚未生成）') + '，正在打开…';
+  fetch(target, { method: 'HEAD' }).then(function (r) {
+    if (r.ok) { location.replace(target); }
+    else { foot.textContent = '未能自动打开，请从上方列表选择。'; }
+  }).catch(function () { foot.textContent = '未能自动打开，请从上方列表选择。'; });
+})();
+</script>
+</body></html>
