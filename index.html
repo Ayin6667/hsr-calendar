@@ -1,25 +1,56 @@
 <!DOCTYPE html>
 <html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>崩坏：星穹铁道 月历</title><style>
+<title>崩坏：星穹铁道 月历</title><style>:root{
+  --bg:#0b0c10; --fg:#e9edf5; --muted:#7e8697; --faint:#69707e;
+  --wrap:#14161c; --bd:#33363f; --divider:#2b2e37;
+  --pill:#1e222b; --pill-fg:#cfd6e2; --link:#7aa2ff;
+  --accent:#ffc531; --accent-fg:#1a1c22; --shadow:rgba(0,0,0,.45);
+}
+[data-theme="light"]{
+  --bg:#eef1f7; --fg:#1b1f2a; --muted:#5b6478; --faint:#77809a;
+  --wrap:#ffffff; --bd:#d5dbe6; --divider:#e0e5ee;
+  --pill:#f7f9fc; --pill-fg:#1b1f2a; --link:#2a52b0;
+  --accent:#e0a800; --accent-fg:#1a1c22; --shadow:rgba(20,30,60,.14);
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{min-height:100vh;background:#0b0c10;color:#e9edf5;
+body{min-height:100vh;background:var(--bg);color:var(--fg);
 font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",system-ui,sans-serif;
-display:flex;align-items:center;justify-content:center;padding:32px}
-.wrap{width:100%;max-width:560px;background:#14161c;border:2px solid #33363f;border-radius:16px;padding:34px 30px}
+display:flex;align-items:center;justify-content:center;padding:32px;
+transition:background .18s,color .18s}
+.wrap{width:100%;max-width:560px;background:var(--wrap);border:2px solid var(--bd);
+border-radius:16px;padding:34px 30px;box-shadow:0 6px 26px var(--shadow);
+transition:background .18s,border-color .18s}
 h1{font-size:23px;font-weight:800;margin-bottom:8px}
-.sub{color:#7e8697;font-size:13.5px;margin-bottom:22px;line-height:1.7}
-a.btn{display:block;background:#ffc531;color:#1a1c22;font-weight:800;font-size:16px;
-text-align:center;padding:14px;border-radius:11px;text-decoration:none;margin-bottom:18px}
-a.btn:hover{background:#ffd35c}
-.hint{color:#6b7382;font-size:12.5px;margin-bottom:10px}
+.sub{color:var(--muted);font-size:13.5px;margin-bottom:22px;line-height:1.7}
+a.btn{display:block;background:var(--accent);color:var(--accent-fg);font-weight:800;
+font-size:16px;text-align:center;padding:14px;border-radius:11px;text-decoration:none;
+margin-bottom:18px;transition:filter .15s}
+a.btn:hover{filter:brightness(1.08)}
+.hint{color:var(--faint);font-size:12.5px;margin-bottom:10px}
 ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px}
-li a{display:inline-block;background:#1e222b;border:2px solid #33363f;border-radius:18px;
-padding:6px 14px;color:#cfd6e2;text-decoration:none;font-size:13px}
-li a:hover{border-color:#7aa2ff;color:#fff}
-.foot{margin-top:22px;padding-top:16px;border-top:2px solid #2b2e37;color:#69707e;font-size:12px;line-height:1.8}
-</style></head>
-<body><div class="wrap">
+li a{display:inline-block;background:var(--pill);border:2px solid var(--bd);border-radius:18px;
+padding:6px 14px;color:var(--pill-fg);text-decoration:none;font-size:13px;transition:border-color .15s,color .15s}
+li a:hover{border-color:var(--link);color:var(--link)}
+.foot{margin-top:22px;padding-top:16px;border-top:2px solid var(--divider);
+color:var(--faint);font-size:12px;line-height:1.8}
+.theme-toggle{position:fixed;top:18px;right:18px;z-index:9999;display:inline-flex;
+align-items:center;gap:8px;background:var(--pill);color:var(--fg);border:2px solid var(--bd);
+border-radius:22px;padding:8px 15px;font-family:inherit;font-size:13px;font-weight:700;
+line-height:1;cursor:pointer;box-shadow:0 3px 14px var(--shadow);
+transition:background .18s,border-color .18s,transform .12s}
+.theme-toggle:hover{transform:translateY(-1px);border-color:var(--link)}
+.theme-toggle svg{display:block;flex:0 0 auto}
+.tt-moon{display:none}
+[data-theme="light"] .tt-sun{display:none}
+[data-theme="light"] .tt-moon{display:block}
+.tt-lbl::after{content:"浅色"}
+[data-theme="light"] .tt-lbl::after{content:"深色"}
+</style>
+<script>(function(){var K='hsr-theme',s=null;try{s=localStorage.getItem(K)}catch(e){}var m=window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches;document.documentElement.setAttribute('data-theme',s||(m?'light':'dark'));})();</script></head>
+<body>
+<button id="themeBtn" class="theme-toggle" type="button" aria-label="切换浅色 / 深色模式" title="切换浅色 / 深色模式"><svg class="tt-sun" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.4v2.6M12 19v2.6M2.4 12h2.6M19 12h2.6M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M18.7 5.3l-1.8 1.8M7.1 16.9l-1.8 1.8"/></svg><svg class="tt-moon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.6A8.6 8.6 0 1 1 9.4 3.5a7 7 0 0 0 11.1 11.1z"/></svg><span class="tt-lbl"></span></button>
+<div class="wrap">
   <h1>崩坏：星穹铁道 · 月历</h1>
   <div class="sub">每月一份，每周六刷新。红线标的是当前真实时刻。</div>
   <a class="btn" id="go" href="2026/10/calendar.html">打开最新月历</a>
@@ -34,7 +65,7 @@ li a:hover{border-color:#7aa2ff;color:#fff}
   var go = document.getElementById('go');
   var foot = document.getElementById('foot');
   function ym() {
-    var d = new Date(Date.now() + 8 * 3600 * 1000);   // 北京时间
+    var d = new Date(Date.now() + 8 * 3600 * 1000);
     var m = d.getUTCMonth() + 1;
     return d.getUTCFullYear() + '/' + (m < 10 ? '0' + m : '' + m);
   }
@@ -49,4 +80,5 @@ li a:hover{border-color:#7aa2ff;color:#fff}
   }).catch(function () { foot.textContent = '未能自动打开，请从上方列表选择。'; });
 })();
 </script>
+<script>(function(){var K='hsr-theme',r=document.documentElement,btn=document.getElementById('themeBtn');function cur(){return r.getAttribute('data-theme')==='light'?'light':'dark';}if(btn){btn.addEventListener('click',function(){var n=cur()==='light'?'dark':'light';r.setAttribute('data-theme',n);try{localStorage.setItem(K,n)}catch(e){}});}if(window.matchMedia){var mq=window.matchMedia('(prefers-color-scheme: light)');var h=function(e){var s=null;try{s=localStorage.getItem(K)}catch(x){}if(!s){r.setAttribute('data-theme',e.matches?'light':'dark')}};if(mq.addEventListener){mq.addEventListener('change',h)}else if(mq.addListener){mq.addListener(h)}}})();</script>
 </body></html>
