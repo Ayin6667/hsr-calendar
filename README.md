@@ -83,6 +83,7 @@ hsr-calendar/
 | `type` | ✅ | `version` / `war` / `light` / `activity` / `note` |
 | `title` | ✅ | 完整标题 |
 | `short` | | 月网格格子内的短标签（缺省截断标题） |
+| `url` | | 条目的信息源链接；网页版条目会渲染成可点击外链并显示 ↗ |
 | `source` | ✅ | `official` / `verified` / `doubtful` |
 | `ongoing` | | `true` 表示长期开放 / 常驻，单独归入「长期开放」一行 |
 
