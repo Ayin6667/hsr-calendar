@@ -86,6 +86,7 @@ $PY hsr_upload.py 2026 10              # 正式上传（覆盖刷新当月）
 - `date` 必填；`end` 可选，用于画时长条
 - `type`：`version` | `war` | `light` | `activity` | `note`
 - `short` 可选，月网格格子里显示的短标签（缺省则截断标题）
+- `url` 可选，该条目的信息源链接；HTML 版会把该条目（月网格 chip / 整月时间轴条 / 常驻胶囊 / 格内色带）渲染成可点击外链（`target="_blank" rel="noopener noreferrer"`）并加 ↗ 标记，缺省则该条目不可点
 - `source`：`official` 🟢 | `verified` 🟡 | `doubtful` 🔴
 - `ongoing: true` 表示**长期开放 / 常驻**：不计入逐日格子，单独列在「长期开放」一行，
   时间轴按整月铺满
