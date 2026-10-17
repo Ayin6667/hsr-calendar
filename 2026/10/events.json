@@ -19,20 +19,11 @@
   },
   {
     "date": "2026-09-28",
-    "end": "2026-10-14",
+    "end": "2026-10-20",
     "type": "war",
-    "url": "https://www.taptap.cn/moment/852211155802787824",
-    "title": "第一期复刻跃迁「花盛之裁者」：限定5★绯英（欢愉·物理），含4★ UP 青雀/雪衣/米沙",
-    "short": "绯英复刻（一期）",
-    "source": "verified"
-  },
-  {
-    "date": "2026-10-14",
-    "end": "2026-11-04",
-    "type": "war",
-    "url": "https://www.taptap.cn/moment/851030753205555161",
-    "title": "4.6 下半复刻跃迁：限定5★千冶·刃（Mortenax Blade，火·虚无）",
-    "short": "下半 · 千冶刃",
+    "url": "https://gl.ali213.net/html/2026-9/1812903.html",
+    "title": "上半复刻跃迁「花盛之裁者」：限定5★绯英（欢愉·物理）+ 专武「邂逅于下一个花季」，含4★ UP（青雀/雪衣/米沙）",
+    "short": "绯英复刻",
     "source": "verified"
   },
   {
@@ -72,15 +63,6 @@
     "source": "official"
   },
   {
-    "date": "2026-10-14",
-    "end": "2026-11-04",
-    "type": "activity",
-    "url": "https://www.taptap.cn/moment/853592474952665210",
-    "title": "「星际和平盛典：一镜到底」战斗活动（下半开放）",
-    "short": "盛典·一镜到底",
-    "source": "doubtful"
-  },
-  {
     "date": "2026-09-28",
     "end": "2026-11-11",
     "type": "note",
@@ -88,67 +70,6 @@
     "title": "新时装上架时装橱窗：绯英「月待花时」、风堇「云边拾暖」（限时折扣 2680 星琼）",
     "short": "新时装",
     "source": "official"
-  },
-  {
-    "date": "2026-10-01",
-    "type": "note",
-    "title": "商店「余烬兑换 / 星芒商店」每月限购重置（每月 1 日刷新）",
-    "short": "商店重置",
-    "source": "verified"
-  },
-  {
-    "date": "2026-10-05",
-    "type": "note",
-    "title": "周一 04:00 周常刷新：模拟宇宙 / 差分宇宙周积分、历战余响次数、委托与周活跃",
-    "short": "周常刷新",
-    "source": "official"
-  },
-  {
-    "date": "2026-10-12",
-    "type": "note",
-    "title": "周一 04:00 周常刷新",
-    "short": "周常刷新",
-    "source": "official"
-  },
-  {
-    "date": "2026-10-12",
-    "end": "2026-10-26",
-    "type": "activity",
-    "url": "https://honkai-star-rail.fandom.com/wiki/Planar_Fissure/2026-10-12",
-    "title": "「位面分裂」位面饰品限时双倍掉落（模拟宇宙沉浸奖励 / 饰品提取）",
-    "short": "位面分裂",
-    "source": "doubtful"
-  },
-  {
-    "date": "2026-10-14",
-    "type": "note",
-    "url": "https://www.taptap.cn/moment/851030753205555161",
-    "title": "4.6 第一期跃迁结束：绯英复刻与 4★ UP（青雀 / 雪衣 / 米沙）下架，同日下半开启",
-    "short": "一期结束",
-    "source": "verified"
-  },
-  {
-    "date": "2026-10-19",
-    "type": "note",
-    "title": "周一 04:00 周常刷新",
-    "short": "周常刷新",
-    "source": "official"
-  },
-  {
-    "date": "2026-10-26",
-    "type": "note",
-    "title": "周一 04:00 周常刷新",
-    "short": "周常刷新",
-    "source": "official"
-  },
-  {
-    "date": "2026-10-26",
-    "end": "2026-11-11",
-    "type": "activity",
-    "url": "https://gamemarket.gg/news/honkai-star-rail/hsr-4-6-wishpower-event-500-jade-and-18-trendible-vouchers",
-    "title": "「拟造花萼」限时双倍掉落（花萼繁盛，排期待官方公告确认）",
-    "short": "花萼双倍",
-    "source": "doubtful"
   },
   {
     "date": "2026-09-28",
@@ -185,5 +106,84 @@
     "short": "货币战争",
     "source": "doubtful",
     "ongoing": true
+  },
+  {
+    "date": "2026-10-01",
+    "type": "note",
+    "title": "商店「余烬兑换 / 星芒商店」每月限购重置（每月 1 日刷新）",
+    "short": "商店重置",
+    "source": "verified"
+  },
+  {
+    "date": "2026-10-05",
+    "type": "note",
+    "title": "周一 04:00 周常刷新：模拟宇宙 / 差分宇宙周积分、历战余响次数、委托与周活跃",
+    "short": "周常刷新",
+    "source": "official"
+  },
+  {
+    "date": "2026-10-12",
+    "type": "note",
+    "title": "周一 04:00 周常刷新",
+    "short": "周常刷新",
+    "source": "official"
+  },
+  {
+    "date": "2026-10-12",
+    "end": "2026-10-25",
+    "type": "activity",
+    "url": "https://gamemarket.gg/news/honkai-star-rail/honkai-star-rail-4-6-planar-fissure-preview-dates-and-prep-guide",
+    "title": "「位面分裂」位面饰品限时双倍掉落（10/12–10/25，模拟宇宙沉浸奖励 / 饰品提取）",
+    "short": "位面分裂",
+    "source": "verified"
+  },
+  {
+    "date": "2026-10-19",
+    "type": "note",
+    "title": "周一 04:00 周常刷新",
+    "short": "周常刷新",
+    "source": "official"
+  },
+  {
+    "date": "2026-10-20",
+    "type": "note",
+    "url": "https://gl.ali213.net/html/2026-9/1812903.html",
+    "title": "4.6 上半跃迁结束：绯英复刻下架（下半 10/21 起接力千冶·刃）",
+    "short": "上半结束",
+    "source": "verified"
+  },
+  {
+    "date": "2026-10-21",
+    "end": "2026-11-10",
+    "type": "war",
+    "url": "https://gl.ali213.net/html/2026-9/1812903.html",
+    "title": "下半复刻跃迁：限定5★千冶·刃（Mortenax Blade，火·虚无）+ 专武「灼尽炼狱的新骸」，真珠继续 UP",
+    "short": "千冶·刃",
+    "source": "verified"
+  },
+  {
+    "date": "2026-10-21",
+    "end": "2026-11-10",
+    "type": "activity",
+    "url": "https://gamemarket.gg/news/honkai-star-rail/honkai-star-rail-4-6-planar-fissure-preview-dates-and-prep-guide",
+    "title": "「星际和平盛典：一镜到底」战斗活动（10/21 开放；结束日未公布，按版本末估）",
+    "short": "一镜到底",
+    "source": "verified"
+  },
+  {
+    "date": "2026-10-26",
+    "type": "note",
+    "title": "周一 04:00 周常刷新",
+    "short": "周常刷新",
+    "source": "official"
+  },
+  {
+    "date": "2026-10-30",
+    "end": "2026-11-11",
+    "type": "activity",
+    "url": "https://honkai-star-rail.fandom.com/wiki/Garden_of_Plenty/2026-10-30",
+    "title": "「花藏繁生」拟造花萼限时双倍掉落（10/30–11/11）",
+    "short": "花藏繁生",
+    "source": "verified"
   }
 ]
