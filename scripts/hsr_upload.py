@@ -80,10 +80,14 @@ def _vault_cli():
     cands = [os.environ.get("HSR_VAULT_CLI"), os.environ.get("DSH_KEY_VAULT_CLI")]
     cands += sorted(glob.glob(os.path.join(home, ".dsh", "profiles", "*", "node_modules",
                                            "dsh-key-vault", "get-secret.mjs")))
-    return _first_existing(cands)
+    p = _first_existing(cands)
+    # node_modules\dsh-key-vault 是 pnpm 软链接：把链接路径当 argv[1] 传给 node 时，
+    # get-secret.mjs 的入口判断 import.meta.url !== argv[1] 会失败，主流程静默跳过，
+    # 输出为空且退出码 0。realpath 解引用到真实路径后两者一致。
+    return os.path.realpath(p) if p else None
 
 
-def vault_get(name, field="secret"):
+def vault_get(name, field="secret", purpose="hsr-calendar 月历站点自动发布"):
     """Return one field of a vault entry, or None when the vault is unavailable."""
     cli, node = _vault_cli(), _node_exe()
     if not cli or not node:
@@ -91,7 +95,7 @@ def vault_get(name, field="secret"):
               % ("找到" if node else "未找到", cli or "未找到"), file=sys.stderr)
         return None
     try:
-        proc = subprocess.run([node, cli, name, "--field", field],
+        proc = subprocess.run([node, cli, name, "--purpose", purpose, "--field", field],
                               capture_output=True, text=True, encoding="utf-8",
                               errors="replace", timeout=30)
     except Exception as exc:
