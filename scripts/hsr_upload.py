@@ -9,24 +9,31 @@ Usage:
 One file set per month under YYYY/MM/, overwritten on every weekly run.
 
 Token resolution order (first hit wins):
-    1. --token-file <path>
-    2. $HSR_GITHUB_TOKEN_FILE
-    3. $GITHUB_TOKEN                    (env var still wins over any file)
-    4. <script dir>/.hsr_token
-    5. %USERPROFILE%\\.dsh\\secrets\\hsr-github-token
+    1. --token-file <path>              (explicit override)
+    2. $HSR_GITHUB_TOKEN_FILE           (explicit override)
+    3. $GITHUB_TOKEN                    (env var wins over the vault)
+    4. dsh-key-vault entry "github.com" (the normal path)
+
+No implicit plaintext token file is read any more: the token comes from the vault
+through get-secret.mjs, so no second copy of the secret sits on disk.
 Env overrides: GITHUB_REPO (default Ayin6667/hsr-calendar), GITHUB_BRANCH (default main).
 """
 import base64
+import glob
 import io
 import json
 import os
 import re
+import shutil
+import subprocess
 import sys
 import urllib.error
 import urllib.request
 from datetime import date, timedelta
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 REPO = os.environ.get("GITHUB_REPO", "Ayin6667/hsr-calendar")
 BRANCH = os.environ.get("GITHUB_BRANCH", "main")
@@ -38,21 +45,74 @@ TOKEN_TERMS = [
 ]
 
 
+# --------------------------------------------------------------------------- #
+# Credential source: dsh-key-vault CLI
+#
+# Every read goes through get-secret.mjs, which prints just the value on stdout
+# and exits non-zero on any failure. The vault is the single source, so no
+# plaintext copy of the token is kept on disk. An explicit --token-file (or the
+# matching env var) still wins, so a one-off override stays possible.
+# --------------------------------------------------------------------------- #
+VAULT_ENTRY_GITHUB = "github.com"
+
+
+def _first_existing(cands):
+    for cand in cands:
+        if cand and os.path.exists(cand):
+            return cand
+    return None
+
+
+def _node_exe():
+    """Locate node.exe, which is only needed to run the vault CLI."""
+    home = os.environ.get("USERPROFILE") or os.path.expanduser("~")
+    cands = [os.environ.get("DSH_NODE"), shutil.which("node"), shutil.which("node.exe")]
+    cands += sorted(glob.glob(os.path.join(home, ".dsh", "dsh-runtimes", "*",
+                                           "dependencies", "node", "bin", "node.exe")))
+    return _first_existing(cands)
+
+
+def _vault_cli():
+    """Locate get-secret.mjs from the installed dsh-key-vault plugin."""
+    home = os.environ.get("USERPROFILE") or os.path.expanduser("~")
+    cands = [os.environ.get("HSR_VAULT_CLI"), os.environ.get("DSH_KEY_VAULT_CLI")]
+    cands += sorted(glob.glob(os.path.join(home, ".dsh", "profiles", "*", "node_modules",
+                                           "dsh-key-vault", "get-secret.mjs")))
+    return _first_existing(cands)
+
+
+def vault_get(name, field="secret"):
+    """Return one field of a vault entry, or None when the vault is unavailable."""
+    cli, node = _vault_cli(), _node_exe()
+    if not cli or not node:
+        print("WARN   : 保险库不可用（node=%s cli=%s）"
+              % ("找到" if node else "未找到", cli or "未找到"), file=sys.stderr)
+        return None
+    try:
+        proc = subprocess.run([node, cli, name, "--field", field],
+                              capture_output=True, text=True, encoding="utf-8",
+                              errors="replace", timeout=30)
+    except Exception as exc:
+        print("WARN   : 调用保险库失败 -> %s" % exc, file=sys.stderr)
+        return None
+    if proc.returncode != 0:
+        detail = (proc.stderr or "").strip() or ("exit %s" % proc.returncode)
+        print("WARN   : 保险库读取 %s 失败 -> %s" % (name, detail), file=sys.stderr)
+        return None
+    return (proc.stdout or "").strip() or None
+
+
 def resolve_token(cli_file=None):
     """Return (token, source_description)."""
-    candidates = []
+    explicit = []
     if cli_file:
-        candidates.append((cli_file, "--token-file"))
+        explicit.append((cli_file, "--token-file"))
     if os.environ.get("HSR_GITHUB_TOKEN_FILE"):
-        candidates.append((os.environ["HSR_GITHUB_TOKEN_FILE"], "$HSR_GITHUB_TOKEN_FILE"))
+        explicit.append((os.environ["HSR_GITHUB_TOKEN_FILE"], "$HSR_GITHUB_TOKEN_FILE"))
     if os.environ.get("GITHUB_TOKEN"):
         return os.environ["GITHUB_TOKEN"].strip(), "$GITHUB_TOKEN (环境变量)"
-    candidates.append((os.path.join(HERE, ".hsr_token"), "脚本目录 .hsr_token"))
-    home = os.environ.get("USERPROFILE") or os.path.expanduser("~")
-    candidates.append((os.path.join(home, ".dsh", "secrets", "hsr-github-token"),
-                       "%USERPROFILE%\\.dsh\\secrets\\hsr-github-token"))
     problems = []
-    for path, label in candidates:
+    for path, label in explicit:
         if not os.path.exists(path):
             problems.append("  未找到: " + label + "\n            " + path)
             continue
@@ -69,7 +129,13 @@ def resolve_token(cli_file=None):
             problems.append("  内容不像 GitHub token（应以 ghp_/github_pat_ 等开头）: " + label)
             continue
         return token, label + "\n           " + path
-    print("ERROR: 未找到可用的 GitHub token。请创建包含 token 的文件，或用 --token-file 指定。")
+    token = vault_get(VAULT_ENTRY_GITHUB)
+    if token:
+        if token.startswith(tuple(TOKEN_TERMS)):
+            return token, "dsh-key-vault 条目 " + VAULT_ENTRY_GITHUB
+        problems.append("  保险库条目 %s 的内容不像 GitHub token" % VAULT_ENTRY_GITHUB)
+    print("ERROR: 未找到可用的 GitHub token。"
+          "可用 --token-file 指定，或把 token 存进保险库条目 %s。" % VAULT_ENTRY_GITHUB)
     for p in problems:
         print(p)
     return None, None
@@ -179,6 +245,12 @@ padding:6px 14px;color:var(--pill-fg);text-decoration:none;font-size:13px;transi
 li a:hover{border-color:var(--link);color:var(--link)}
 .foot{margin-top:22px;padding-top:16px;border-top:2px solid var(--divider);
 color:var(--faint);font-size:12px;line-height:1.8}
+.repo{margin-top:14px;text-align:center}
+.repo a{display:inline-flex;align-items:center;gap:7px;background:var(--pill);border:2px solid var(--bd);
+border-radius:20px;padding:8px 16px;color:var(--pill-fg);text-decoration:none;font-size:13px;
+font-weight:700;transition:border-color .15s,color .15s}
+.repo a:hover{border-color:var(--link);color:var(--link)}
+.repo svg{flex:0 0 auto}
 .theme-toggle{position:fixed;top:18px;right:18px;z-index:9999;display:inline-flex;
 align-items:center;gap:8px;background:var(--pill);color:var(--fg);border:2px solid var(--bd);
 border-radius:22px;padding:8px 15px;font-family:inherit;font-size:13px;font-weight:700;
@@ -212,11 +284,17 @@ def build_index(months, current):
 @@BTN@@
 <div class="wrap">
   <h1>崩坏：星穹铁道 · 月历</h1>
-  <div class="sub">每月一份，每周六刷新。红线标的是当前真实时刻。</div>
+  <div class="sub">每月一份，每周六刷新。红线标的是当前真实时刻，条目可点击跳转官方来源。</div>
   <a class="btn" id="go" href="@@LATEST@@/calendar.html">打开最新月历</a>
   <div class="hint">全部月份</div>
   <ul>@@OPTS@@</ul>
   <div class="foot" id="foot">正在跳转到本月月历…</div>
+  <div class="repo">
+    <a href="https://github.com/Ayin6667/hsr-calendar" target="_blank" rel="noopener noreferrer">
+      <svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+      在 GitHub 查看数据与脚本 ↗
+    </a>
+  </div>
 </div>
 <script>
 (function () {
@@ -329,6 +407,14 @@ def main():
     all_ok = put_text("index.html", build_index(months, prefix),
                       "chore(site): 刷新根目录落地页（可用月份：%s）" % ", ".join(months[:6]),
                       token, dry_run=dry_run) and all_ok
+
+    # 仓库说明：与站点保持同步（README 内的链接统一指向 ayin.dpdns.org）
+    readme = os.path.join(HERE, "README.md")
+    if os.path.exists(readme):
+        with open(readme, encoding="utf-8") as fh:
+            all_ok = put_text("README.md", fh.read(),
+                              "docs: 同步 README（月历说明与线上地址）",
+                              token, dry_run=dry_run) and all_ok
 
     print("RESULT : " + ("SUCCESS" if all_ok else "PARTIAL/FAILED"))
     return 0 if all_ok else 1
