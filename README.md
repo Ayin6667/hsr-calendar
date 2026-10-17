@@ -31,6 +31,7 @@
 ```
 hsr-calendar/
 ├── index.html              # 站点首页（按北京时间自动跳转到当月）
+├── 404.html                # 未知路径的自定义 404 页（缺了它未知路径会回退首页并返回 200）
 ├── YYYY/
 │   └── MM/                 # 年/月，每月一份产物，每周覆盖刷新
 │       ├── calendar.png    # 月历图片（月网格 + 整月时间轴）
@@ -39,7 +40,7 @@ hsr-calendar/
 ├── scripts/
 │   ├── hsr_monthly.py          # 月历图片生成（Pillow）
 │   ├── hsr_monthly_html.py     # 月历网页生成
-│   ├── hsr_upload.py           # 上传 GitHub 并刷新首页
+│   ├── hsr_upload.py           # 上传 GitHub、刷新首页与 404 页
 │   ├── deploy_cf.py            # 部署 Cloudflare Pages
 │   └── README.md               # 脚本用法与凭据配置
 └── README.md
