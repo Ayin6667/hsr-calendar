@@ -1,92 +1,124 @@
-## 🎮 崩坏:星穹铁道月历
+## 🎮 崩坏:星穹铁道 月历
 
-> 每月一份 · 每周六刷新 · 版本更新 / 角色跃迁 / 活动日历一览无余
+> **在线查看 → <https://ayin.dpdns.org>**
+>
+> 每月一份产物 · 每周六刷新当月 · 网页版活动条目可点击跳转官方来源
 
 ---
 
-### 🌐 线上地址
+### 🌐 在线地址
 
-| 地址 | 说明 |
+| 入口 | 地址 |
 |---|---|
-| **[https://ayin.dpdns.org](https://ayin.dpdns.org)** | 自定义域名（Cloudflare Pages，自动跳当月） |
-| [https://hsr-calendar.pages.dev](https://hsr-calendar.pages.dev) | Cloudflare Pages 默认域名 |
-| [https://github.com/Ayin6667/hsr-calendar](https://github.com/Ayin6667/hsr-calendar) | 本仓库（归档源） |
+| 站点首页（自动跳到当月） | <https://ayin.dpdns.org> |
+| 当月月历网页（含实时红线与倒计时） | <https://ayin.dpdns.org/2026/10/calendar.html> |
+| 当月月历图片 | <https://ayin.dpdns.org/2026/10/calendar.png> |
+| 当月事件数据 | <https://ayin.dpdns.org/2026/10/events.json> |
 
-域名 `ayin.dpdns.org` 的 DNS 由 Cloudflare 托管，站点通过 Cloudflare Pages 发布，SSL 由
-Google Trust Services 签发。每周刷新后会自动重新部署，无需人工操作。
-
-> 提示：站点可能开启 Bot Fight Mode，用脚本抓取时请带正常浏览器 User-Agent；
-> `Python-urllib` 这类默认 UA 会被拦成 403。
-
+站点由 Cloudflare Pages 托管，自定义域名 `ayin.dpdns.org` 绑定在项目 `hsr-calendar` 上。本仓库是同一个站点的内容源，**日常请直接看在线地址**——网页版比图片多了实时红线、结束倒计时、浅色/深色切换和可点击来源。
 
 ### 📌 这是什么？
 
-本仓库归档《崩坏:星穹铁道》的**月度**游戏事件，每周自动刷新当月：
+按月归档《崩坏:星穹铁道》的关键游戏事件，覆盖整月而非单周：
 
-- 🆕 **版本更新** — 版本期与版本内的关键节点
-- 🎯 **角色跃迁** — 卡池与光锥、上下半切换时间
-- 🎉 **活动日历** — 游戏内活动、限时双倍、常驻玩法
-- ✨ **新时装/立绘** — 新发布的外观内容
+- 🆕 **版本期** — 大版本起止与上下半切换
+- 🎯 **角色跃迁** — 卡池、专武、复刻时间窗
+- 🎉 **活动日历** — 版本活动、限时双倍、常驻轮换
+- ✨ **新时装 / 公告** — 外观上架与重要官方公告
 
 ### 📂 文件结构
 
 ```
 hsr-calendar/
+├── index.html              # 站点首页（按北京时间自动跳转到当月）
 ├── YYYY/
-│   └── MM/                # 每月一份，每周覆盖刷新
-│       ├── calendar.png    # 月历图（月网格 + 整月时间轴）
-│       ├── calendar.html   # 同版式网页版，红线按真实时间走动
+│   └── MM/                 # 年/月，每月一份产物，每周覆盖刷新
+│       ├── calendar.png    # 月历图片（月网格 + 整月时间轴）
+│       ├── calendar.html   # 月历网页（实时红线 / 倒计时 / 主题切换 / 来源外链）
 │       └── events.json     # 当月事件数据
-├── YYYY/Wxx/              # 早期周历归档（W38 / W39 / W40，已停止更新）
 ├── scripts/
-│   ├── hsr_monthly.py        # 月历图生成
-│   ├── hsr_monthly_html.py   # 月历网页生成
-│   ├── hsr_upload.py         # GitHub 上传
-│   └── README.md             # 脚本用法与凭据配置
+│   ├── hsr_monthly.py          # 月历图片生成（Pillow）
+│   ├── hsr_monthly_html.py     # 月历网页生成
+│   ├── hsr_upload.py           # 上传 GitHub 并刷新首页
+│   ├── deploy_cf.py            # 部署 Cloudflare Pages
+│   └── README.md               # 脚本用法与凭据配置
 └── README.md
 ```
 
 ### 🔄 更新方式
 
 | 触发时间 | 内容 |
-|---------|------|
-| 每周六 13:00（北京时间 / Asia/Shanghai） | 刷新**当月**月历并推送到仓库 |
+|---|---|
+| 每周六 13:00（北京时间 / Asia/Shanghai） | 检索当月事件 → 重新生成图片与网页 → 覆盖上传当月目录 → 部署站点 |
 
-由 DSH 会话内的定时提醒驱动，到点自动跑完「搜索事件 → 生成两份产物 → 上传」全流程。
-因为是每周刷新，同一个月的 `calendar.png` / `calendar.html` / `events.json` 会被覆盖更新，
-`events.json` 始终反映当月最新排期。
+**月历每月换新、每周刷新**：同一个月份目录每周被覆盖一次，所以月中随时打开都是最新排期。跨月时自动写入新月份目录。
 
-> 手动执行、凭据配置与依赖说明见 [`scripts/README.md`](scripts/README.md)。
-> 上传脚本**不含任何 token**，凭据从本地文件读取（默认 `%USERPROFILE%\.dsh\secrets\hsr-github-token`）。
+执行由 DSH 会话内的定时提醒驱动，全流程无人值守。
 
-### 🕐 关于红线
+### ✨ 网页版特性
 
-图上与网页版的红色竖线标的是**当前真实时刻**，不是「今天整天」：
-
-- 位置 = (当前时刻 − 月初) / 当月总时长，含日内小数（例：10-04 20:56 → 12.50%）
-- 网页版 `calendar.html` 每 20 秒自动重算，页面开着红线就会继续走；跨零点时「今天」高亮格也会迁移
+- **实时红线** — 按真实时刻（含日内小数）定位，页面内每 20 秒自行走动，不随刷新冻结
+- **结束倒计时** — 每条有明确结束时间的活动，在时长标签内显示「剩 N天H小时」，24 小时内转为橙色告警，过期显示删除线
+- **条目即链接** — 月网格彩线、整月时间轴条、常驻胶囊均可点击，直达官方公告（新标签页打开）
+- **卡池合并** — 同日多个卡池在网格中合并为一条（如「卡池 真珠+绯英」），详情见下方时间轴
+- **展开更多** — 单日事件较多时显示「+N 项」，点击展开该格全部条目
+- **浅色 / 深色** — 跟随系统偏好，可手动切换并记住选择
 
 ### 📊 数据来源与标注
 
 信息按以下优先级采集：
 
-- 🟢 **官方确认** — 米哈游 / HoYoverse 官方公告、版本更新说明、官方社区发帖
-- 🟡 **多方印证** — 17173 / 4399（公众号官方转载）、TapTap、NGA / 贴吧 / B站等交叉核对
-- 🔴 **存疑待核** — 信源之间日期或名称不一致，以游戏内公告为准
+| 优先 | 来源 |
+|---|---|
+| 1 | 米游社 · 崩坏：星穹铁道「官方 → 公告」 |
+| 2 | HoYoverse 官方版本更新说明 |
+| 3 | Bilibili 崩坏星穹铁道官方 |
+| 4 | TapTap 官方号 |
+| 兜底 | 以上均无对应内容时，回退到可核查的精确来源（游侠网 / GameMarket / Fandom 等），避免挂无关页面凑数 |
+
+`source` 字段含义：
+
+- 🟢 `official` — 官方公告直接确认
+- 🟡 `verified` — 多方印证或官方间接说明
+- 🔴 `doubtful` — 信源之间日期或名称不一致，以游戏内公告为准
 
 ### 📝 事件数据字段
+
+```json
+[
+  {
+    "date": "2026-10-12",
+    "end": "2026-10-25",
+    "type": "activity",
+    "url": "https://www.miyoushe.com/sr/article/78837137",
+    "title": "「位面分裂」位面饰品限时双倍掉落（10/12–10/25）",
+    "short": "位面分裂",
+    "source": "verified"
+  }
+]
+```
 
 | 字段 | 必填 | 说明 |
 |---|---|---|
 | `date` | ✅ | 开始日 `YYYY-MM-DD` |
-| `end` | | 结束日；有跨度的事件填上，用于画时长条 |
+| `end` | | 结束日；有跨度就填，用于画时长条与倒计时 |
 | `type` | ✅ | `version` / `war` / `light` / `activity` / `note` |
+| `url` | | 信息源链接；网页版会渲染为可点击外链 |
 | `title` | ✅ | 完整标题 |
-| `short` | | 月网格格子内的短标签（缺省截断标题） |
-| `url` | | 条目的信息源链接；网页版条目会渲染成可点击外链并显示 ↗ |
+| `short` | | 月网格与彩线里的短标签（缺省截断标题） |
 | `source` | ✅ | `official` / `verified` / `doubtful` |
 | `ongoing` | | `true` 表示长期开放 / 常驻，单独归入「长期开放」一行 |
 
+### 🔧 技术栈
+
+- Python 3 + Pillow（月历图片）
+- 纯静态 HTML/CSS/JS（无框架、无构建、无外部请求）
+- GitHub REST API（内容推送，无需 git）；Cloudflare Pages（托管与自定义域名）
+- DSH 会话内定时提醒驱动
+
+> 手动执行、凭据配置与依赖说明见 [`scripts/README.md`](scripts/README.md)。
+> 脚本**不含任何凭据**，均从本地文件读取（GitHub：`%USERPROFILE%\.dsh\secrets\hsr-github-token`；Cloudflare：`%USERPROFILE%\.dsh\secrets\cloudflare.json`）。
+
 ---
 
-*由 [Ayin6667](https://github.com/Ayin6667) 维护 · 月历由 AI 助手自动生成*
+*在线站点 <https://ayin.dpdns.org> · 由 [Ayin6667](https://github.com/Ayin6667) 维护 · 月历由 AI 助手自动生成*
