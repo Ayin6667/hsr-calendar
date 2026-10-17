@@ -8,16 +8,21 @@ Usage:
     python deploy_cf.py --project <name>  # override the Pages project name
 
 Credentials (first hit wins):
-    1. --creds <path>
-    2. $CLOUDFLARE_CREDS_FILE
+    1. --creds <path>                         (explicit override, JSON file)
+    2. $CLOUDFLARE_CREDS_FILE                 (explicit override)
     3. env $CLOUDFLARE_API_TOKEN (+ optional $CLOUDFLARE_ACCOUNT_ID)
-    4. %USERPROFILE%\\.dsh\\secrets\\cloudflare.json   {"api_token": "...", "account_id": "..."}
-`account_id` is optional: if absent it is resolved from the token via /accounts.
+    4. dsh-key-vault entry "cloudflare.com"   (the normal path, via get-secret.mjs)
+
+No implicit plaintext credential file is read any more. `account_id` is not a
+secret: it comes from $CLOUDFLARE_ACCOUNT_ID, else from the vault entry's notes,
+else it is resolved from the token via /accounts.
 Env overrides: CLOUDFLARE_PAGES_PROJECT (default hsr-calendar).
 """
+import glob
 import io
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -25,6 +30,8 @@ import urllib.error
 import urllib.request
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SITE = os.path.join(HERE, "_site")
@@ -48,16 +55,78 @@ NODE_DIR = r"C:\Users\Ayin\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\no
 PNPM = r"C:\Users\Ayin\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\pnpm\bin\pnpm.mjs"
 
 
-def resolve_creds(cli_path=None):
-    cands = []
-    if cli_path:
-        cands.append((cli_path, "--creds"))
-    if os.environ.get("CLOUDFLARE_CREDS_FILE"):
-        cands.append((os.environ["CLOUDFLARE_CREDS_FILE"], "$CLOUDFLARE_CREDS_FILE"))
+# --------------------------------------------------------------------------- #
+# Credential source: dsh-key-vault CLI
+#
+# Every read goes through get-secret.mjs, which prints just the value on stdout
+# and exits non-zero on any failure. The vault is the single source, so no
+# plaintext copy of a secret is kept on disk. An explicit --creds (or the
+# matching env var) still wins, so a one-off override stays possible.
+# --------------------------------------------------------------------------- #
+VAULT_ENTRY_CLOUDFLARE = "cloudflare.com"
+VAULT_ENTRY_GITHUB = "github.com"
+
+
+def _first_existing(cands):
+    for cand in cands:
+        if cand and os.path.exists(cand):
+            return cand
+    return None
+
+
+def _node_exe():
+    """Locate node.exe, which is only needed to run the vault CLI."""
     home = os.environ.get("USERPROFILE") or os.path.expanduser("~")
-    cands.append((os.path.join(home, ".dsh", "secrets", "cloudflare.json"),
-                  r"%USERPROFILE%\.dsh\secrets\cloudflare.json"))
-    for path, label in cands:
+    cands = [os.environ.get("DSH_NODE"), shutil.which("node"), shutil.which("node.exe")]
+    cands += sorted(glob.glob(os.path.join(home, ".dsh", "dsh-runtimes", "*",
+                                           "dependencies", "node", "bin", "node.exe")))
+    return _first_existing(cands)
+
+
+def _vault_cli():
+    """Locate get-secret.mjs from the installed dsh-key-vault plugin."""
+    home = os.environ.get("USERPROFILE") or os.path.expanduser("~")
+    cands = [os.environ.get("HSR_VAULT_CLI"), os.environ.get("DSH_KEY_VAULT_CLI")]
+    cands += sorted(glob.glob(os.path.join(home, ".dsh", "profiles", "*", "node_modules",
+                                           "dsh-key-vault", "get-secret.mjs")))
+    return _first_existing(cands)
+
+
+def vault_get(name, field="secret"):
+    """Return one field of a vault entry, or None when the vault is unavailable."""
+    cli, node = _vault_cli(), _node_exe()
+    if not cli or not node:
+        print("WARN   : 保险库不可用（node=%s cli=%s）"
+              % ("找到" if node else "未找到", cli or "未找到"), file=sys.stderr)
+        return None
+    try:
+        proc = subprocess.run([node, cli, name, "--field", field],
+                              capture_output=True, text=True, encoding="utf-8",
+                              errors="replace", timeout=30)
+    except Exception as exc:
+        print("WARN   : 调用保险库失败 -> %s" % exc, file=sys.stderr)
+        return None
+    if proc.returncode != 0:
+        detail = (proc.stderr or "").strip() or ("exit %s" % proc.returncode)
+        print("WARN   : 保险库读取 %s 失败 -> %s" % (name, detail), file=sys.stderr)
+        return None
+    return (proc.stdout or "").strip() or None
+
+
+def _account_from_vault_notes():
+    """account_id is not a secret; it is recorded in the vault entry's notes."""
+    notes = vault_get(VAULT_ENTRY_CLOUDFLARE, field="notes") or ""
+    hit = re.search(r"account_id\s*=\s*([0-9a-f]{32})", notes, re.I)
+    return hit.group(1) if hit else ""
+
+
+def resolve_creds(cli_path=None):
+    explicit = []
+    if cli_path:
+        explicit.append((cli_path, "--creds"))
+    if os.environ.get("CLOUDFLARE_CREDS_FILE"):
+        explicit.append((os.environ["CLOUDFLARE_CREDS_FILE"], "$CLOUDFLARE_CREDS_FILE"))
+    for path, label in explicit:
         if not os.path.exists(path):
             continue
         try:
@@ -76,8 +145,16 @@ def resolve_creds(cli_path=None):
         print("CREDS  : 已加载（来源：$CLOUDFLARE_API_TOKEN）")
         return (os.environ["CLOUDFLARE_API_TOKEN"].strip(),
                 os.environ.get("CLOUDFLARE_ACCOUNT_ID", "").strip(), DEFAULT_PROJECT)
-    print("ERROR: 未找到 Cloudflare 凭据。请创建 %USERPROFILE%\\.dsh\\secrets\\cloudflare.json：")
-    print('       {"api_token": "<Pages:Edit 权限的 token>", "account_id": "<可选>"}')
+    token = vault_get(VAULT_ENTRY_CLOUDFLARE)
+    if token:
+        account_id = (os.environ.get("CLOUDFLARE_ACCOUNT_ID", "").strip()
+                      or _account_from_vault_notes())
+        print("CREDS  : 已加载（来源：dsh-key-vault 条目 %s）" % VAULT_ENTRY_CLOUDFLARE)
+        return token, account_id, DEFAULT_PROJECT
+    print("ERROR: 未找到 Cloudflare 凭据。请把 token 存进保险库条目 %s，"
+          "或用 $CLOUDFLARE_API_TOKEN 提供。" % VAULT_ENTRY_CLOUDFLARE)
+    print('       仅当坚持用文件时才需要 --creds <path>，内容为 '
+          '{"api_token": "...", "account_id": "<可选>"}')
     return None, None, None
 
 
@@ -113,11 +190,11 @@ def check(token, account_id):
                 print("ACCOUNT: %s (%s)%s" % (a["name"], a["id"],
                                               "  <- 将使用" if len(accts) == 1 else ""))
             if len(accts) > 1:
-                print("WARN   : token 可访问多个账号，请在凭据文件写明 account_id")
+                print("WARN   : token 可访问多个账号，请用 $CLOUDFLARE_ACCOUNT_ID 指定 account_id")
             account_id = accts[0]["id"]
         else:
             print("ACCOUNT: 无法列出账号 http=%s %s" % (st, str(body)[:160]))
-            print("         请把 account_id 写进凭据文件（Cloudflare 控制台右侧栏可见）")
+            print("         请用 $CLOUDFLARE_ACCOUNT_ID 指定 account_id（Cloudflare 控制台右侧栏可见）")
             return None
 
     st, body = cf_get("/accounts/" + account_id, token)
@@ -138,15 +215,7 @@ def check(token, account_id):
 def gh_token():
     if os.environ.get("GITHUB_TOKEN"):
         return os.environ["GITHUB_TOKEN"].strip()
-    home = os.environ.get("USERPROFILE") or os.path.expanduser("~")
-    for p in (os.path.join(home, ".dsh", "secrets", "hsr-github-token"),
-              os.path.join(HERE, ".hsr_token")):
-        if os.path.exists(p):
-            with open(p, "r", encoding="utf-8-sig") as fh:
-                t = fh.read().strip()
-            if t:
-                return t
-    return ""
+    return vault_get(VAULT_ENTRY_GITHUB) or ""
 
 
 def gh_get(path, token, raw=False):
