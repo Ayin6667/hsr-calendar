@@ -279,7 +279,7 @@ def build_site():
             p = node.get("path", "")
             if node.get("type") != "blob":
                 continue
-            if p == "index.html" or (p.startswith("2026/") and p.lower().endswith(
+            if p in ("index.html", "404.html") or (p.startswith("2026/") and p.lower().endswith(
                     (".html", ".json", ".png", ".css", ".js"))):
                 wanted.append(p)
         print("MIRROR : 仓库内待发布文件 %d 个" % len(wanted))
@@ -327,6 +327,9 @@ def build_site():
             fh.write(FALLBACK_INDEX.replace("@@M@@", MONTH_SUBDIR))
         n += 1
         total += os.path.getsize(idx)
+
+    if not os.path.exists(os.path.join(SITE, "404.html")):
+        print("WARN   : _site 缺少 404.html，未知路径仍会回退到首页并返回 200")
 
     if n:
         print("BUILD  : %s  (%d 个文件, %.1f KB)" % (SITE, n, total / 1024.0))
