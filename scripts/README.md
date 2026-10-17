@@ -152,9 +152,17 @@ $PY deploy_cf.py --build     # 只装配 ./_site（不需要凭据）
 $PY deploy_cf.py             # 装配并部署（首次会自动创建项目）
 ```
 
-站点内容 = 仓库的 `index.html` + `2026/**`（html/json/png）。装配方式是用 GitHub API 镜像仓库到
+站点内容 = 仓库的 `index.html` + `404.html` + `2026/**`（html/json/png）。装配方式是用 GitHub API 镜像仓库到
 `_site/`（raw media type + 重试；`codeload` 的 tarball 接口在本机会被重置连接，故不用），再交给 wrangler 上传。
 默认项目名 `hsr-calendar`，可用 `--project` 或 `$CLOUDFLARE_PAGES_PROJECT` 覆盖。
+
+### 404 页
+
+Cloudflare Pages 的项目里**没有** `404.html` 时，未知路径会回退到 `index.html` 并返回 **200** ——
+于是 404 看起来像首页，用状态码判断"线上有没有这个文件"会全部得到 200。
+`hsr_upload.py` 生成并上传根目录的 `404.html`（与落地页共用同一套主题变量与切换按钮），
+`deploy_cf.py` 会把它一起镜像进 `_site/`；缺失时构建阶段会打印
+`WARN : _site 缺少 404.html` 提醒。部署后未知路径返回 **404** + 该页，`/404.html` 本身返回 200。
 
 ### 自定义域名
 
