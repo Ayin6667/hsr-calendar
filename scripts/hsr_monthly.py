@@ -23,7 +23,7 @@ CST = timezone(timedelta(hours=8))
 
 W = 1620
 M = 40                     # 外边距
-CELL_H = 148
+CELL_H = 200
 CELL_GAP = 8
 BAR_ROW = 30
 TL_TOP_PAD = 34
@@ -42,6 +42,8 @@ FAINT = (112, 120, 152)
 ACCENT = (122, 162, 255)
 RED = (227, 59, 78)
 GOLD = (240, 200, 110)
+
+TYPE_ORDER = {"version": 0, "war": 1, "light": 2, "activity": 3, "note": 4}
 
 TYPE_META = {
     "version": ("版本", "★", (255, 77, 109)),
@@ -69,6 +71,12 @@ def font(size, bold=False):
             except Exception:
                 continue
     return ImageFont.load_default()
+
+
+def war_name(ev):
+    """卡池短名：取 short 里 " · " 之前的部分，并去掉"复刻"。"""
+    s = (ev.get("short") or ev["title"]).split(" · ")[0]
+    return s.replace("复刻", "").strip() or s
 
 
 def clip(dr, text, f, max_w):
@@ -208,6 +216,7 @@ def main():
     f_day = font(19, True)
     f_chip = font(13)
     f_tiny = font(12)
+    f_band = font(11)
     f_badge = font(13, True)
 
     # ---------------- header ----------------
@@ -252,8 +261,9 @@ def main():
         dr.text((x + 12, yy + 9), str(dnum), font=f_day, fill=num_col)
 
         cy = yy + 36
-        starts = sorted(day_start.get(d.isoformat(), []), key=lambda t: t["ev"]["type"])
-        for it in starts[:4]:
+        starts = sorted(day_start.get(d.isoformat(), []),
+                        key=lambda t: TYPE_ORDER.get(t["ev"]["type"], 9))
+        for it in starts[:3]:
             ev = it["ev"]
             label, glyph, col = TYPE_META.get(ev["type"], TYPE_META["note"])
             txt = ev.get("short") or ev["title"][:8]
@@ -265,15 +275,42 @@ def main():
             dr.rectangle([x + 9, cy + 1, x + 12, cy + 15], fill=col)
             dr.text((x + 17, cy), lead, font=f_chip, fill=col)
             cy += 19
-        if len(starts) > 4:
-            dr.text((x + 17, cy), "+%d 项" % (len(starts) - 4), font=f_tiny, fill=FAINT)
+        if len(starts) > 3:
+            dr.text((x + 17, cy), "+%d 项" % (len(starts) - 3), font=f_tiny, fill=FAINT)
 
-        spans = sorted(day_span.get(d.isoformat(), []), key=lambda t: t["ev"]["type"])
-        by = yy + CELL_H - 6 - min(6, len(spans)) * 4
-        for it in spans[:6]:
-            col = TYPE_META.get(it["ev"]["type"], TYPE_META["note"])[2]
-            dr.rectangle([x + 9, by, x + cw - 9, by + 2], fill=col)
-            by += 4
+        spans = sorted(day_span.get(d.isoformat(), []),
+                       key=lambda t: TYPE_ORDER.get(t["ev"]["type"], 9))
+        # 卡池（war）同日多条合并成一条，与网页版保持一致
+        war_items = [it for it in spans if it["ev"]["type"] == "war"]
+        bands = []          # (标签, 颜色)
+        war_done = False
+        for it in spans:
+            bev = it["ev"]
+            if bev["type"] == "war":
+                if war_done:
+                    continue
+                war_done = True
+                if len(war_items) == 1:
+                    bands.append(("卡池：" + war_name(bev), TYPE_META["war"][2]))
+                else:
+                    bands.append(("卡池：" + "、".join(war_name(x["ev"]) for x in war_items),
+                                  TYPE_META["war"][2]))
+                continue
+            bands.append((bev.get("short") or bev["title"][:8],
+                          TYPE_META.get(bev["type"], TYPE_META["note"])[2]))
+        shown = bands[:4]
+        bh, bgap = 15, 2
+        block_h = len(shown) * bh + max(0, len(shown) - 1) * bgap
+        if len(bands) > 4:
+            block_h += 15
+        by = yy + CELL_H - 8 - block_h
+        for blabel, bcol in shown:
+            dr.rounded_rectangle([x + 8, by, x + cw - 8, by + bh], 3, fill=bcol)
+            nm = clip(dr, blabel, f_band, cw - 26)
+            dr.text((x + 13, by + 2), nm, font=f_band, fill=(255, 255, 255))
+            by += bh + bgap
+        if len(bands) > 4:
+            dr.text((x + 12, by), "+%d 项" % (len(bands) - 4), font=f_tiny, fill=FAINT)
 
     top += grid_h + 22
 
