@@ -276,7 +276,7 @@ def main():
             cls.append("past")
         if d == today:
             cls.append("today")
-        starts = sorted(day_start.get(key, []), key=lambda x: x["ev"]["type"])
+        starts = sorted(day_start.get(key, []), key=lambda x: TYPE_ORDER.get(x["ev"]["type"], 9))
         spans = sorted(day_span.get(key, []), key=lambda x: TYPE_ORDER.get(x["ev"]["type"], 9))
         chips = []
         for it in starts[:3]:
