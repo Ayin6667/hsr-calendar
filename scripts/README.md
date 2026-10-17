@@ -8,7 +8,8 @@
 |---|---|
 | `hsr_monthly.py` | 读取事件 JSON，用 Pillow 生成月历图 `calendar.png`（月网格 + 整月时间轴） |
 | `hsr_monthly_html.py` | 生成同版式的交互式 `calendar.html`，红线按真实时间自动移动 |
-| `hsr_upload.py` | 通过 GitHub REST API 把三份产物推到 `YYYY/MM/` |
+| `hsr_upload.py` | 通过 GitHub REST API 把三份产物推到 `YYYY/MM/`，并刷新根目录 `index.html` 落地页与 `README.md` |
+| `deploy_cf.py` | 把仓库里的网页产物直传到 Cloudflare Pages（对外站点） |
 
 > **沿革**：本项目原为周历（`hsr_weekly.py` / `hsr_weekly_html.py`，按 `YYYY/Wxx/` 归档）。
 > 现已改为**月历 + 每周刷新**：产物落在 `YYYY/MM/`，每周六覆盖刷新当月；旧周历脚本已移除，
@@ -22,35 +23,46 @@
 
 ## 凭据配置（必做）
 
-`hsr_upload.py` **不含任何 token**，按序查找（首个命中即用）：
+凭据**不以明文落在磁盘上**：脚本通过 DSH 的凭据保险库取值，调用
+
+```
+node get-secret.mjs <条目名>
+```
+
+`get-secret.mjs` 由 `dsh-key-vault` 插件提供（默认位置
+`~/.dsh/profiles/<profile>/node_modules/dsh-key-vault/get-secret.mjs`），只把值打到 stdout，
+失败时非零退出，脚本据此判断。用到的两个条目：
+
+| 条目名 | 用途 |
+|---|---|
+| `github.com` | GitHub PAT（`repo` 权限，或对目标仓库的 contents 写权限） |
+| `cloudflare.com` | Cloudflare API Token（Account → Cloudflare Pages → Edit）。`account_id` 不是密钥，记在该条目的 notes 里 |
+
+在 DSH 里通过界面钥匙面板或让助手存入即可，脚本侧**不需要任何凭据配置文件**。
+
+### 覆盖顺序（首个命中即用）
+
+`hsr_upload.py`：
 
 1. `--token-file <路径>`
 2. 环境变量 `$HSR_GITHUB_TOKEN_FILE` 指向的文件
 3. 环境变量 `$GITHUB_TOKEN`
-4. 脚本同目录 `.hsr_token`
-5. `%USERPROFILE%\.dsh\secrets\hsr-github-token`（默认，推荐）
+4. 保险库条目 `github.com`（默认）
 
-创建默认凭据文件（Windows PowerShell）：
+`deploy_cf.py`：
 
-```powershell
-$dir = Join-Path $env:USERPROFILE '.dsh\secrets'
-New-Item -ItemType Directory -Force -Path $dir | Out-Null
-$file = Join-Path $dir 'hsr-github-token'
-# 不要带 BOM、不要带尾随换行
-[System.IO.File]::WriteAllText($file, '<你的 token>', (New-Object System.Text.UTF8Encoding($false)))
-icacls $file /inheritance:r
-icacls $file /grant:r "$($env:USERNAME):(R)"
-```
+1. `--creds <路径>`（JSON：`{"api_token": "...", "account_id": "<可选>"}`）
+2. 环境变量 `$CLOUDFLARE_CREDS_FILE`
+3. 环境变量 `$CLOUDFLARE_API_TOKEN`（可配 `$CLOUDFLARE_ACCOUNT_ID`）
+4. 保险库条目 `cloudflare.com`（默认）
 
-Linux / macOS：
+> 显式的文件参数**仍然可用**（换机器、临时调试、没有 DSH 环境时用），
+> 但**没有任何隐式明文来源会被自动读取**：早先的 `.hsr_token`、
+> `%USERPROFILE%\.dsh\secrets\hsr-github-token`、`%USERPROFILE%\.dsh\secrets\cloudflare.json`
+> 三个默认路径已全部移除，避免"加密存储 + 明文旁路"绕开保险库。
 
-```bash
-mkdir -p ~/.dsh/secrets
-printf '%s' '<你的 token>' > ~/.dsh/secrets/hsr-github-token
-chmod 600 ~/.dsh/secrets/hsr-github-token
-```
-
-token 需 `repo` 权限（或对目标仓库的 contents 写权限）。
+定位不到 `node` 或 `get-secret.mjs`、或条目不存在时，脚本会在 stderr 打印 `WARN`
+并继续尝试后续来源，不会静默成功。
 
 ## 用法
 
@@ -73,12 +85,13 @@ $PY hsr_upload.py 2026 10              # 正式上传（覆盖刷新当月）
 ```json
 [
   {
-    "date": "2026-10-14",
-    "end": "2026-11-04",
+    "date": "2026-10-21",
+    "end": "2026-11-10",
     "type": "war",
-    "title": "4.6 下半复刻跃迁：限定5★千冶·刃（Mortenax Blade，火·虚无）",
+    "title": "4.6 下半跃迁：限定5★千冶·刃（Mortenax Blade，火·虚无）",
     "short": "下半 · 千冶刃",
-    "source": "verified"
+    "source": "verified",
+    "url": "https://gl.ali213.net/html/2026-9/1812903.html"
   }
 ]
 ```
@@ -111,15 +124,24 @@ YYYY/MM/events.json      # 事件数据
 - `hsr_monthly_html.py`：除生成时定位外，页面内置脚本每 20 秒按北京时间重算一次，
   页面长时间开着红线也会跟着走；跨零点时「今天」高亮格一并迁移
 
+## 交互特性（仅 HTML 版）
+
+- **色带带名**：月网格每天把跨天条目画成 15px 高的色带，活动名直接显示在色带内；
+  同日多个卡池合并为一条 `卡池：A、B`
+- **展开更多**：单日超过 4 条时其余折叠为 `+N 项` 按钮，点击就地展开（色带全部预渲染，
+  展开只切显隐，不重新请求）
+- **结束倒计时**：时间轴上带 `end` 的条目显示 `剩 N天H小时` / `剩 H小时M分` / `剩 M分`，
+  结束时标 `已结束`；倒计时与红线共用同一个 20 秒心跳
+- **深色/浅色切换**：右上角按钮，选择记在 `localStorage`，首屏渲染前应用以避免闪白；
+  未选择时跟随系统 `prefers-color-scheme`
+
 ## 部署到 Cloudflare Pages
 
 `deploy_cf.py` 把仓库里的网页产物直传到一个 Cloudflare Pages 项目（不需要构建步骤、不需要 `wrangler.toml`）。
 
-**凭据**（与 GitHub token 分开保存）：`%USERPROFILE%\.dsh\secrets\cloudflare.json`
-
-```json
-{"api_token": "<权限：Account -> Cloudflare Pages -> Edit>", "account_id": "<可选，缺省则自动探测>"}
-```
+**凭据**：保险库条目 `cloudflare.com`（与 GitHub 的 `github.com` 分开存放），取值顺序见上文「凭据配置」。
+`account_id` 不是密钥，按 `$CLOUDFLARE_ACCOUNT_ID` → 保险库条目 notes → 用 token 调 `/accounts` 自动探测
+依次解析，因此脚本里不硬编码账号 ID。
 
 > 注意：Cloudflare **账户级** API token 调 `/user/tokens/verify` 会返回 `401 Invalid API Token`，
 > 这是**正常现象**（该端点只校验用户级 token）。`deploy_cf.py` 因此改用 `/accounts/...` 端点校验。
@@ -143,4 +165,4 @@ Cloudflare Pages 的域名绑定在**控制台或 API** 完成，**不需要仓�
 
 ### 部署产物忽略项
 
-`_site/` 与 `cloudflare.json` 已在 `.gitignore` 中忽略。
+`_site/`、`cloudflare.json`、`*.token` 已在 `.gitignore` 中忽略（防止有人误把手写的文件凭据提交上去）。
