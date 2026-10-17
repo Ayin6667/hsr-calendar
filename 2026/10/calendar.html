@@ -80,8 +80,9 @@ overflow:hidden;white-space:nowrap;opacity:.92;font-style:normal}
 background:var(--chip-bg);border:1px solid var(--cell-bd);border-radius:3px;
 padding:1px 5px;cursor:pointer;text-align:left;line-height:1.25}
 .smore:hover{color:var(--accent);border-color:var(--accent)}
-.spans .extra{display:none}
-.cell.expanded .spans .extra{display:flex}
+/* 特异性必须高于 .spans a.sg(0,2,1)，故用三个类(0,3,0) */
+.spans .sg.extra{display:none}
+.cell.expanded .spans .sg.extra{display:flex}
 .tlwrap{margin-top:20px;background:var(--panel);border:2px solid var(--panel-bd);border-radius:12px;padding:14px 16px 18px;transition:background .18s,border-color .18s}
 .tlhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .tlhead h3{font-size:15px;font-weight:800;color:var(--fg)}
@@ -124,8 +125,8 @@ a.sg:hover{filter:brightness(1.12)}
 <button id="themeBtn" class="theme-toggle" type="button" aria-label="切换浅色 / 深色模式" title="切换浅色 / 深色模式"><svg class="tt-sun" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.4v2.6M12 19v2.6M2.4 12h2.6M19 12h2.6M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M18.7 5.3l-1.8 1.8M7.1 16.9l-1.8 1.8"/></svg><svg class="tt-moon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.6A8.6 8.6 0 1 1 9.4 3.5a7 7 0 0 0 11.1 11.1z"/></svg><span class="tt-lbl"></span></button>
 <div class="frame">
   <div class="head">
-    <div class="title">崩坏：星穹铁道 · 月历<span>2026 年 10 月 · 每周六刷新 · 数据截至 2026-10-17 15:48（北京时间）</span></div>
-    <div class="nowbadge">今天 <span id="nowtxt">10/17 星期六 15:48</span></div>
+    <div class="title">崩坏：星穹铁道 · 月历<span>2026 年 10 月 · 每周六刷新 · 数据截至 2026-10-17 15:52（北京时间）</span></div>
+    <div class="nowbadge">今天 <span id="nowtxt">10/17 星期六 15:52</span></div>
   </div>
 
   <div class="dow"><div class="">一</div><div class="">二</div><div class="">三</div><div class="">四</div><div class="">五</div><div class="we">六</div><div class="we">日</div></div>
@@ -147,7 +148,7 @@ a.sg:hover{filter:brightness(1.12)}
   </div>
 
   <div class="foot">
-    覆盖范围 <code>2026-10-01</code> ~ <code>2026-10-31</code>（31 天）· 生成于 2026-10-17 15:48（Asia/Shanghai）· 由 <code>hsr_monthly_html.py</code> 生成<br>
+    覆盖范围 <code>2026-10-01</code> ~ <code>2026-10-31</code>（31 天）· 生成于 2026-10-17 15:52（Asia/Shanghai）· 由 <code>hsr_monthly_html.py</code> 生成<br>
     来源：HoYoverse 官方版本更新说明与官方社区发帖、17173 / 4399（公众号官方转载）、TapTap 官方号、GameWith / GameMarket / Notebookcheck 交叉核对。<br>
     🔴 为信源之间日期或名称不一致项；「超出本月」表示该事件在本月结束后仍在持续，请以游戏内公告为准。<br>
     页面地址 <a class="repolink" href="https://ayin.dpdns.org" target="_blank" rel="noopener">ayin.dpdns.org</a>
