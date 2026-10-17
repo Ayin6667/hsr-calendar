@@ -20,6 +20,7 @@ Env overrides: GITHUB_REPO (default Ayin6667/hsr-calendar), GITHUB_BRANCH (defau
 """
 import base64
 import glob
+import hashlib
 import io
 import json
 import os
@@ -27,6 +28,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.request
 from datetime import date, timedelta
@@ -151,24 +153,63 @@ def request(url, token, method="GET", payload=None):
     if data:
         req.add_header("Content-Type", "application/json")
     try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        with urllib.request.urlopen(req, timeout=120) as resp:
             return resp.status, json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:
         return exc.code, exc.read().decode("utf-8", "replace")[:500]
 
 
-def put_file(path, local_path, message, token, dry_run=False):
-    with open(local_path, "rb") as fh:
-        content = base64.b64encode(fh.read()).decode("ascii")
+def _with_retries(fn, label, attempts=3):
+    """Run fn once, retrying on network-level failures (timeout / reset / DNS)."""
+    last = None
+    for i in range(attempts):
+        try:
+            return fn()
+        except Exception as exc:
+            last = exc
+            if i < attempts - 1:
+                wait = 2 * (i + 1)
+                print("RETRY  : " + label + " 网络失败（" + type(exc).__name__ + "），"
+                      + str(wait) + " 秒后重试")
+                time.sleep(wait)
+    print("ERROR  : " + label + " 重试 " + str(attempts) + " 次仍失败：" + repr(last))
+    return None
+
+
+def _blob_sha(data):
+    """Git blob SHA-1 — the same value the contents API reports as `sha`."""
+    h = hashlib.sha1()
+    h.update(b"blob " + str(len(data)).encode("ascii") + b"\0")
+    h.update(data)
+    return h.hexdigest()
+
+
+def _put_bytes(path, data, message, token, dry_run=False):
     if dry_run:
-        print("DRY-RUN would upload " + path + "  (" + str(os.path.getsize(local_path)) + " bytes)")
+        print("DRY-RUN would upload " + path + "  (" + str(len(data)) + " bytes)")
         return True
-    status, body = request(API + "/contents/" + path + "?ref=" + BRANCH, token)
-    sha = body.get("sha") if status == 200 and isinstance(body, dict) else None
-    payload = {"message": message, "content": content, "branch": BRANCH}
-    if sha:
-        payload["sha"] = sha
-    status, body = request(API + "/contents/" + path, token, method="PUT", payload=payload)
+
+    def _attempt():
+        st, bd = request(API + "/contents/" + path + "?ref=" + BRANCH, token)
+        sha = bd.get("sha") if st == 200 and isinstance(bd, dict) else None
+        if sha and sha == _blob_sha(data):
+            return ("same", 0, None)          # identical content already in the repo
+        payload = {"message": message,
+                   "content": base64.b64encode(data).decode("ascii"),
+                   "branch": BRANCH}
+        if sha:
+            payload["sha"] = sha
+        st2, bd2 = request(API + "/contents/" + path, token, method="PUT", payload=payload)
+        return ("put", st2, bd2)
+
+    res = _with_retries(_attempt, path)
+    if res is None:
+        print("FAILED  " + path + "  （网络中断，未完成；重跑可续）")
+        return False
+    if res[0] == "same":
+        print("SAME    " + path + "  （仓库内容已一致，跳过）")
+        return True
+    status, body = res[1], res[2]
     ok = status in (200, 201)
     if ok and isinstance(body, dict):
         detail = body.get("commit", {}).get("sha", "")[:8]
@@ -181,23 +222,15 @@ def put_file(path, local_path, message, token, dry_run=False):
     return ok
 
 
+def put_file(path, local_path, message, token, dry_run=False):
+    with open(local_path, "rb") as fh:
+        data = fh.read()
+    return _put_bytes(path, data, message, token, dry_run=dry_run)
+
+
 def put_text(path, text, message, token, dry_run=False):
-    """Upload an in-memory text file (used for the site landing page)."""
-    if dry_run:
-        print("DRY-RUN would upload " + path + "  (" + str(len(text.encode("utf-8"))) + " bytes)")
-        return True
-    status, body = request(API + "/contents/" + path + "?ref=" + BRANCH, token)
-    sha = body.get("sha") if status == 200 and isinstance(body, dict) else None
-    payload = {"message": message,
-               "content": base64.b64encode(text.encode("utf-8")).decode(),
-               "branch": BRANCH}
-    if sha:
-        payload["sha"] = sha
-    status, body = request(API + "/contents/" + path, token, method="PUT", payload=payload)
-    ok = status in (200, 201)
-    detail = body.get("commit", {}).get("sha", "")[:8] if ok and isinstance(body, dict) else str(body)
-    print(("UPLOADED " if ok else "FAILED  ") + path + "  http=" + str(status) + "  " + detail)
-    return ok
+    """Upload an in-memory text file (landing page, 404 page, README)."""
+    return _put_bytes(path, text.encode("utf-8"), message, token, dry_run=dry_run)
 
 
 def list_months(token):
@@ -325,6 +358,50 @@ def build_index(months, current):
         "@@THEMEJS@@", THEME_JS).replace("@@TOGGLEJS@@", TOGGLE_JS).replace("@@BTN@@", THEME_BTN)
 
 
+NOTFOUND_EXTRA_CSS = """
+code{background:var(--pill);border:2px solid var(--bd);border-radius:7px;padding:3px 8px;
+font-family:ui-monospace,Consolas,"Courier New",monospace;font-size:12.5px;color:var(--link);
+word-break:break-all;line-height:1.6}
+.codes{margin-top:2px}
+.foot a{color:var(--link);text-decoration:none}
+.foot a:hover{text-decoration:underline}
+"""
+
+
+def build_404():
+    """Standalone 404 page.
+
+    Cloudflare Pages serves the output root's 404.html (with a real 404 status)
+    for any unmatched path, so unknown URLs stop masquerading as the homepage.
+    """
+    return """<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>404 · 页面不存在 · 崩坏：星穹铁道 月历</title>
+<meta name="robots" content="noindex">
+<style>@@CSS@@@@EXTRA@@</style>
+<script>@@THEMEJS@@</script></head>
+<body>
+@@BTN@@
+<div class="wrap">
+  <h1>404 · 这一页不在星轨上</h1>
+  <div class="sub">这个地址没有对应的页面或月份。可能是该月尚未归档，也可能是链接写错了。</div>
+  <a class="btn" href="/">回到首页</a>
+  <div class="hint">你请求的路径</div>
+  <div class="codes"><code id="miss">/</code></div>
+  <div class="foot">
+    数据与脚本：<a href="https://github.com/Ayin6667/hsr-calendar">Ayin6667/hsr-calendar</a><br>
+    本页由 Cloudflare Pages 的 404.html 返回，HTTP 状态码为 404。
+  </div>
+</div>
+<script>(function(){var e=document.getElementById('miss');
+if(e){e.textContent=location.pathname+location.search}})();</script>
+<script>@@TOGGLEJS@@</script>
+</body></html>
+""".replace("@@CSS@@", INDEX_CSS).replace("@@EXTRA@@", NOTFOUND_EXTRA_CSS).replace(
+        "@@THEMEJS@@", THEME_JS).replace("@@TOGGLEJS@@", TOGGLE_JS).replace("@@BTN@@", THEME_BTN)
+
+
 def main():
     argv = sys.argv[1:]
     token_file = None
@@ -406,6 +483,12 @@ def main():
         months = sorted(set(months) | {prefix}, reverse=True)
     all_ok = put_text("index.html", build_index(months, prefix),
                       "chore(site): 刷新根目录落地页（可用月份：%s）" % ", ".join(months[:6]),
+                      token, dry_run=dry_run) and all_ok
+
+    # 404 页：Cloudflare Pages 对未知路径回退到 index.html 会返回 200，
+    # 有了根目录 404.html 才会给出真 404（且不停留在首页内容上）
+    all_ok = put_text("404.html", build_404(),
+                      "chore(site): 404 页（未知路径返回真 404，不再回退首页）",
                       token, dry_run=dry_run) and all_ok
 
     # 仓库说明：与站点保持同步（README 内的链接统一指向 ayin.dpdns.org）
