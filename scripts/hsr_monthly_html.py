@@ -18,13 +18,16 @@ import json
 import os
 import re
 import sys
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, time as dtime, timedelta, timezone
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CST = timezone(timedelta(hours=8))
 ROW_PITCH = 54
+
+# 彩线排序优先级：版本 > 卡池 > 双倍 > 活动 > 备注（不能用字母序，否则 activity 会插到 version 前）
+TYPE_ORDER = {"version": 0, "war": 1, "light": 2, "activity": 3, "note": 4}
 
 TYPE_META = {
     "version": ("版本", "★", "var(--c-version)"),
@@ -112,7 +115,7 @@ body{background:var(--bg);color:var(--fg);font-family:"Microsoft YaHei","PingFan
 .dow div{background:var(--dow-bg);border:2px solid var(--dow-bd);border-radius:8px;text-align:center;padding:7px 0;font-size:14px;font-weight:700;color:var(--dim);transition:background .18s,border-color .18s}
 .dow div.we{color:var(--weekend)}
 .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
-.cell{position:relative;min-height:118px;background:var(--cell-bg);border:2px solid var(--cell-bd);border-radius:10px;padding:7px 8px 9px;display:flex;flex-direction:column;gap:4px;transition:background .18s,border-color .18s}
+.cell{position:relative;min-height:200px;background:var(--cell-bg);border:2px solid var(--cell-bd);border-radius:10px;padding:7px 8px 9px;display:flex;flex-direction:column;gap:4px;transition:background .18s,border-color .18s}
 .cell.pad{background:var(--cell-pad);border-color:var(--cell-pad-bd)}
 .cell.past{opacity:var(--cell-past-op)}
 .cell.today{border-color:var(--red);box-shadow:inset 0 0 0 2px var(--red-glow);background:var(--cell-today-bg)}
@@ -121,10 +124,24 @@ body{background:var(--bg);color:var(--fg);font-family:"Microsoft YaHei","PingFan
 .cell.we .dnum{color:var(--weekend)}
 .dnum small{font-size:11px;color:var(--faint);font-weight:600;margin-left:5px}
 .chips{display:flex;flex-direction:column;gap:3px}
-.chip{font-size:11.5px;line-height:1.35;padding:2px 6px;border-radius:5px;border-left:3px solid var(--tc);background:var(--chip-bg);color:var(--tc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip{display:flex;align-items:center;gap:4px;font-size:11.5px;line-height:1.35;padding:2px 6px;border-radius:5px;border-left:3px solid var(--tc);background:var(--chip-bg);color:var(--tc)}
+.chip .ct{flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .more{font-size:11px;color:var(--faint)}
 .spans{margin-top:auto;display:flex;flex-direction:column;gap:2px}
-.spans i{display:block;height:3px;border-radius:2px;opacity:.85}
+/* 用类选择器覆盖 a.sg / span.sg / i 三种写法，避免无链接彩线丢样式 */
+.spans i,.spans .sg{display:flex;align-items:center;gap:3px;height:15px;border-radius:3px;
+background:var(--tc);color:#fff;font-size:10.5px;font-weight:700;line-height:1;padding:0 5px;
+overflow:hidden;white-space:nowrap;opacity:.92;font-style:normal}
+.spans i:hover,.spans .sg:hover{opacity:1}
+.spans .sn{flex:1 1 auto;overflow:hidden;text-overflow:ellipsis}
+.spans .go{flex:0 0 auto;font-size:9px;opacity:.75}
+.smore{font-family:inherit;font-size:9.5px;font-weight:700;color:var(--faint);
+background:var(--chip-bg);border:1px solid var(--cell-bd);border-radius:3px;
+padding:1px 5px;cursor:pointer;text-align:left;line-height:1.25}
+.smore:hover{color:var(--accent);border-color:var(--accent)}
+/* 特异性必须高于 .spans .sg(0,2,0)，故用三个类(0,3,0) */
+.spans .sg.extra{display:none}
+.cell.expanded .spans .sg.extra{display:flex}
 .tlwrap{margin-top:20px;background:var(--panel);border:2px solid var(--panel-bd);border-radius:12px;padding:14px 16px 18px;transition:background .18s,border-color .18s}
 .tlhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .tlhead h3{font-size:15px;font-weight:800;color:var(--fg)}
@@ -138,6 +155,9 @@ body{background:var(--bg);color:var(--fg);font-family:"Microsoft YaHei","PingFan
 .tlbar .n{flex:1 1 auto;font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tlbar .d{font-size:11px;white-space:nowrap;background:var(--pill-bg);border:1px solid var(--pill-bd);padding:2px 7px;border-radius:6px}
 .tlbar .c{font-size:10px;font-weight:800;background:var(--pill-bg);border:1px dashed var(--pill-bd);padding:1px 5px;border-radius:5px}
+.tlbar .d .cd{font-style:normal;margin-left:8px;padding-left:8px;border-left:1px solid var(--pill-bd);font-weight:800;color:var(--dim)}
+.tlbar .d .cd.soon{color:var(--warn)}
+.tlbar .d .cd.over{color:var(--faint);font-weight:600;text-decoration:line-through}
 .ticks{position:relative;height:18px;margin-top:5px}
 .ticks span{position:absolute;font-size:11px;color:var(--faint);transform:translateX(-50%)}
 .nowline{position:absolute;top:0;bottom:0;width:3px;background:var(--red);transform:translateX(-50%);box-shadow:0 0 12px var(--red);z-index:40;pointer-events:none}
@@ -150,7 +170,30 @@ body{background:var(--bg);color:var(--fg);font-family:"Microsoft YaHei","PingFan
 .ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad)}
 .foot{margin-top:14px;color:var(--faint);font-size:12px;line-height:1.75}
 .foot code{background:var(--code-bg);padding:2px 6px;border-radius:5px;color:var(--code-fg)}
+.foot .repolink{color:var(--accent);text-decoration:none;font-weight:700;border-bottom:1px dotted var(--accent)}
+.foot .repolink:hover{filter:brightness(1.15)}
+.go{font-style:normal;font-size:10px;line-height:1;opacity:.65;flex:0 0 auto}
+a.chip,a.tlbar,a.lt,a.sg{text-decoration:none;cursor:pointer}
+a.chip:hover,a.lt:hover{filter:brightness(1.18)}
+a.chip:hover .go,a.lt:hover .go,a.tlbar:hover .go{opacity:1}
+a.tlbar:hover{box-shadow:0 4px 16px var(--shadow)}
+a.sg:hover{filter:brightness(1.12)}
 """
+
+
+def src_attrs(ev):
+    """有条目来源 URL 时返回 (href 属性, 标签名)，否则返回 ("", "span")。"""
+    u = (ev.get("url") or "").strip()
+    if not u:
+        return "", "span"
+    return (' href="%s" target="_blank" rel="noopener noreferrer"'
+            % html.escape(u, quote=True)), "a"
+
+
+def war_name(ev):
+    """卡池短名：取 short 里 " · " 之前的部分，并去掉"复刻"。"""
+    s = (ev.get("short") or ev["title"]).split(" · ")[0]
+    return s.replace("复刻", "").strip() or s
 
 
 def load(month_key):
@@ -234,7 +277,7 @@ def main():
         if d == today:
             cls.append("today")
         starts = sorted(day_start.get(key, []), key=lambda x: x["ev"]["type"])
-        spans = sorted(day_span.get(key, []), key=lambda x: x["ev"]["type"])
+        spans = sorted(day_span.get(key, []), key=lambda x: TYPE_ORDER.get(x["ev"]["type"], 9))
         chips = []
         for it in starts[:3]:
             typ = it["ev"]["type"]
@@ -242,17 +285,59 @@ def main():
             txt = it["ev"].get("short") or it["ev"]["title"][:9]
             if it["end"] > it["start"]:
                 txt += " →%d/%d" % (it["end"].month, it["end"].day)
+            href, tag = src_attrs(it["ev"])
             chips.append(
-                '<span class="chip" style="--tc:%s" title="%s">%s %s</span>'
-                % (col, html.escape(it["ev"]["title"]), glyph, html.escape(txt))
+                '<%s class="chip%s" style="--tc:%s"%s title="%s">'
+                '<span class="ct">%s %s</span>%s</%s>'
+                % (tag, " linked" if href else "", col, href,
+                   html.escape(it["ev"]["title"]), glyph, html.escape(txt),
+                   '<i class="go">\u2197</i>' if href else "", tag)
             )
         if len(starts) > 3:
             chips.append('<span class="more">+%d 项</span>' % (len(starts) - 3))
-        band = "".join(
-            '<i style="background:%s" title="%s"></i>'
-            % (TYPE_META.get(it["ev"]["type"], TYPE_META["note"])[2], html.escape(it["ev"]["title"]))
-            for it in spans[:6]
-        )
+        # 卡池（war）同日多条合并成一条；全部渲染，超出 4 条折叠
+        war_items = [it for it in spans if it["ev"]["type"] == "war"]
+        band_list = []          # (标签, 颜色, title, url)
+        war_done = False
+        for it in spans:
+            bev = it["ev"]
+            if bev["type"] == "war":
+                if war_done:
+                    continue
+                war_done = True
+                if len(war_items) == 1:
+                    band_list.append(("卡池：" + war_name(bev),
+                                      TYPE_META["war"][2], bev["title"], bev.get("url")))
+                else:
+                    names = [war_name(x["ev"]) for x in war_items]
+                    urls = {x["ev"].get("url") for x in war_items}
+                    band_list.append(("卡池：" + "、".join(names), TYPE_META["war"][2],
+                                      " / ".join(x["ev"]["title"] for x in war_items),
+                                      urls.pop() if len(urls) == 1 else None))
+                continue
+            band_list.append((bev.get("short") or bev["title"][:6],
+                              TYPE_META.get(bev["type"], TYPE_META["note"])[2],
+                              bev["title"], bev.get("url")))
+        band_parts = []
+        for idx, (blabel, bcol, btitle, burl) in enumerate(band_list):
+            extra = " extra" if idx >= 4 else ""
+            if burl:
+                band_parts.append(
+                    '<a class="sg linked%s" style="--tc:%s" href="%s"'
+                    ' target="_blank" rel="noopener noreferrer" title="%s">'
+                    '<span class="sn">%s</span><i class="go">↗</i></a>'
+                    % (extra, bcol, html.escape(burl, quote=True),
+                       html.escape(btitle), html.escape(blabel)))
+            else:
+                band_parts.append(
+                    '<span class="sg%s" style="--tc:%s" title="%s">'
+                    '<span class="sn">%s</span></span>'
+                    % (extra, bcol, html.escape(btitle), html.escape(blabel)))
+        if len(band_list) > 4:
+            band_parts.append(
+                '<button class="smore" type="button" data-n="%d">+%d 项</button>'
+                % (len(band_list) - 4, len(band_list) - 4))
+        band = "".join(band_parts)
         cells.append(
             '<div class="%s" data-date="%s"><div class="dnum">%d</div>'
             '<div class="chips">%s</div><div class="spans">%s</div></div>'
@@ -305,15 +390,20 @@ def main():
                 dur += " · 超出本月"
             elif lead:
                 dur += " · 月初前已开"
+            href, tag = src_attrs(ev)
+            end_ms = int(datetime.combine(it["end"], dtime(23, 59, 59), CST).timestamp() * 1000)
+            # 只给数据里真写了 end 的条目加倒计时；单日「点事件」（周常刷新、商店重置等）不加
+            cd = ('<i class="cd" data-end="%d"></i>' % end_ms) if ev.get("end") else ""
             bars_html.append(
-                '<div class="tlbar" style="left:%.4f%%;width:%.4f%%;top:%dpx;--tc:%s" title="%s">'
+                '<%s class="tlbar%s" style="left:%.4f%%;width:%.4f%%;top:%dpx;--tc:%s"%s title="%s（至 %s）">'
                 '%s<span class="t">%s %s</span>'
-                '<span class="n">%s</span><span class="d">%s</span>%s</div>'
-                % (s_f * 100, max(1.6, (e_f - s_f) * 100), r * ROW_PITCH, col,
-                   html.escape(ev["title"]),
+                '<span class="n">%s</span><span class="d">%s%s</span>%s%s</%s>'
+                % (tag, " linked" if href else "", s_f * 100, max(1.6, (e_f - s_f) * 100),
+                   r * ROW_PITCH, col, href, html.escape(ev["title"]), it["end"].isoformat(),
                    '<span class="c">续</span>' if lead else "",
-                   glyph, label, html.escape(txt), dur,
-                   '<span class="c">续</span>' if tail else "")
+                   glyph, label, html.escape(txt), dur, cd,
+                   '<span class="c">续</span>' if tail else "",
+                   '<i class="go">\u2197</i>' if href else "", tag)
             )
     tl_h = max(1, len(rows_packed)) * ROW_PITCH + 10
 
@@ -321,13 +411,18 @@ def main():
     longterm = [it for it in items if it["ongoing"]]
     lt_html = ""
     if longterm:
-        chips2 = "".join(
-            '<span class="lt" style="--tc:%s">%s %s</span>'
-            % (TYPE_META.get(it["ev"]["type"], TYPE_META["note"])[2],
-               TYPE_META.get(it["ev"]["type"], TYPE_META["note"])[1],
-               html.escape(it["ev"].get("short") or it["ev"]["title"][:10]))
-            for it in longterm
-        )
+        lt_parts = []
+        for it in longterm:
+            lev = it["ev"]
+            lmeta = TYPE_META.get(lev["type"], TYPE_META["note"])
+            lhref, ltag = src_attrs(lev)
+            lt_parts.append(
+                '<%s class="lt%s" style="--tc:%s"%s title="%s">%s %s%s</%s>'
+                % (ltag, " linked" if lhref else "", lmeta[2], lhref,
+                   html.escape(lev["title"]), lmeta[1],
+                   html.escape(lev.get("short") or lev["title"][:10]),
+                   '<i class="go">\u2197</i>' if lhref else "", ltag))
+        chips2 = "".join(lt_parts)
         lt_html = '<div class="longterm"><b>长期开放 / 常驻：</b>%s</div>' % chips2
 
     # ---- 刻度 & 网格线 ----
@@ -383,7 +478,9 @@ def main():
   <div class="foot">
     覆盖范围 <code>@@MS@@</code> ~ <code>@@ME@@</code>（@@NDAYS@@ 天）· 生成于 @@CLOCK@@（Asia/Shanghai）· 由 <code>hsr_monthly_html.py</code> 生成<br>
     来源：HoYoverse 官方版本更新说明与官方社区发帖、17173 / 4399（公众号官方转载）、TapTap 官方号、GameWith / GameMarket / Notebookcheck 交叉核对。<br>
-    🔴 为信源之间日期或名称不一致项；「超出本月」表示该事件在本月结束后仍在持续，请以游戏内公告为准。
+    🔴 为信源之间日期或名称不一致项；「超出本月」表示该事件在本月结束后仍在持续，请以游戏内公告为准。<br>
+    页面地址 <a class="repolink" href="https://ayin.dpdns.org" target="_blank" rel="noopener">ayin.dpdns.org</a>
+    · 数据与脚本 <a class="repolink" href="https://github.com/Ayin6667/hsr-calendar" target="_blank" rel="noopener noreferrer">GitHub 仓库 ↗</a>
   </div>
 </div>
 <script>
@@ -392,6 +489,31 @@ def main():
   var line = document.getElementById('nowline');
   var txt = document.getElementById('nowtxt');
   function p2(n) { return (n < 10 ? '0' : '') + n; }
+  var cds = document.querySelectorAll('.cd[data-end]');
+  function fmtCd(ms) {
+    if (ms <= 0) return '已结束';
+    var s = Math.floor(ms / 1000), d = Math.floor(s / 86400),
+        h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
+    if (d > 0) return '剩 ' + d + '天' + (h > 0 ? h + '小时' : '');
+    if (h > 0) return '剩 ' + h + '小时' + (m > 0 ? m + '分' : '');
+    return '剩 ' + m + '分';
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest ? e.target.closest('.smore') : null;
+    if (!b) return;
+    var cell = b.closest('.cell');
+    if (!cell) return;
+    var on = cell.classList.toggle('expanded');
+    b.textContent = on ? '收起' : ('+' + b.getAttribute('data-n') + ' 项');
+  });
+  function cdTick(now) {
+    for (var i = 0; i < cds.length; i++) {
+      var el = cds[i], left = (+el.getAttribute('data-end')) - now;
+      var t = fmtCd(left);
+      if (el.textContent !== t) el.textContent = t;
+      el.className = 'cd' + (left <= 0 ? ' over' : (left < 86400000 ? ' soon' : ''));
+    }
+  }
   function tick() {
     var t = Date.now();
     var p = (t - START) / SPAN * 100;
@@ -408,8 +530,10 @@ def main():
       var nx = document.querySelector('.cell[data-date="' + want + '"]');
       if (nx) nx.classList.add('today');
     }
+    cdTick(t);
   }
   tick();
+  cdTick(Date.now());
   setInterval(tick, 20000);
 })();
 </script>
