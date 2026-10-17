@@ -117,7 +117,8 @@ hsr-calendar/
 - DSH 会话内定时提醒驱动
 
 > 手动执行、凭据配置与依赖说明见 [`scripts/README.md`](scripts/README.md)。
-> 脚本**不含任何凭据**，均从本地文件读取（GitHub：`%USERPROFILE%\.dsh\secrets\hsr-github-token`；Cloudflare：`%USERPROFILE%\.dsh\secrets\cloudflare.json`）。
+> 脚本**不含任何凭据**，统一通过 DSH 保险库取值（`dsh-key-vault/get-secret.mjs` 的 `github.com` 与 `cloudflare.com` 两个条目），
+> 磁盘上不保留明文副本。需要临时覆盖时用 `--token-file` / `--creds` 或 `$GITHUB_TOKEN` / `$CLOUDFLARE_API_TOKEN`。
 
 ---
 
