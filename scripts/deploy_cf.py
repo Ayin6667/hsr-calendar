@@ -54,6 +54,78 @@ MONTH_SUBDIR = os.environ.get("HSR_MONTH_SUBDIR") or _month_subdir()
 NODE_DIR = r"C:\Users\Ayin\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\node\bin"
 PNPM = r"C:\Users\Ayin\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\pnpm\bin\pnpm.mjs"
 
+# pnpm dlx 缓存根目录（用于复用已装好的 wrangler，避免每次联网重装）
+DLX_CACHE_DIRS = [
+    os.path.join(os.environ.get("LOCALAPPDATA", ""), "pnpm-cache", "dlx"),
+    os.path.join(os.environ.get("LOCALAPPDATA", ""), "pnpm", "dlx"),
+]
+
+
+def _ver_key(v):
+    """把 4.152.0 这类版本号转成可比较的元组，非数字段记 0。"""
+    out = []
+    for part in str(v).split("."):
+        num = ""
+        for ch in part:
+            if ch.isdigit():
+                num += ch
+            else:
+                break
+        out.append(int(num) if num else 0)
+    return tuple(out)
+
+
+def find_wrangler():
+    """定位可用的 wrangler 入口。
+
+    优先级：
+      1. 环境变量 HSR_WRANGLER 指定的 wrangler.js 绝对路径
+      2. pnpm dlx 缓存里已安装的版本（取最高版本，直接 node 跑，不联网）
+      3. None —— 交给 pnpm dlx wrangler@latest 现场安装
+
+    之所以先找缓存：`wrangler@latest` 一旦升到新版本，pnpm 会重装依赖，
+    其中 workerd 原生包体积大、镜像不稳时会超时失败；缓存里已有可用版本时
+    完全不需要联网。
+    """
+    forced = os.environ.get("HSR_WRANGLER")
+    if forced:
+        return forced if os.path.isfile(forced) else None
+
+    best = None
+    for base in DLX_CACHE_DIRS:
+        if not base or not os.path.isdir(base):
+            continue
+        try:
+            names = os.listdir(base)
+        except OSError:
+            continue
+        for name in names:
+            top = os.path.join(base, name)
+            if not os.path.isdir(top):
+                continue
+            subs = [top]
+            try:
+                subs += [os.path.join(top, x) for x in os.listdir(top)]
+            except OSError:
+                pass
+            for sub in subs:
+                binjs = os.path.join(sub, "node_modules", "wrangler", "bin", "wrangler.js")
+                pkg = os.path.join(sub, "node_modules", "wrangler", "package.json")
+                if not (os.path.isfile(binjs) and os.path.isfile(pkg)):
+                    continue
+                try:
+                    with open(pkg, encoding="utf-8") as f:
+                        ver = json.load(f).get("version", "0")
+                except Exception:
+                    continue
+                key = (_ver_key(ver), os.path.getmtime(pkg))
+                if best is None or key > best[0]:
+                    best = (key, ver, binjs)
+    if best:
+        print("WRANGLER: 复用缓存 %s" % best[1])
+        return best[2]
+    return None
+
 
 # --------------------------------------------------------------------------- #
 # Credential source: dsh-key-vault CLI
@@ -348,7 +420,13 @@ def run_wrangler(args, token, account_id):
     env["CLOUDFLARE_ACCOUNT_ID"] = account_id
     env["PATH"] = NODE_DIR + os.pathsep + env.get("PATH", "")
     env["npm_config_yes"] = "true"
-    cmd = [os.path.join(NODE_DIR, "node.exe"), PNPM, "dlx", "wrangler@latest"] + args
+    node = os.path.join(NODE_DIR, "node.exe")
+    binjs = find_wrangler()
+    if binjs:
+        cmd = [node, binjs] + args
+    else:
+        print("WRANGLER: 缓存里没有可用版本，回退 pnpm dlx wrangler@latest（需联网）")
+        cmd = [node, PNPM, "dlx", "wrangler@latest"] + args
     print("RUN    : wrangler " + " ".join(args))
     try:
         p = subprocess.run(cmd, env=env, cwd=HERE, capture_output=True,
