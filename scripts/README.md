@@ -152,6 +152,15 @@ $PY deploy_cf.py --build     # 只装配 ./_site（不需要凭据）
 $PY deploy_cf.py             # 装配并部署（首次会自动创建项目）
 ```
 
+**wrangler 复用缓存**：脚本优先在 pnpm dlx 缓存里找已装好的 `wrangler`，直接用
+`node <缓存>/node_modules/wrangler/bin/wrangler.js` 跑，**不联网**。只有缓存里一个都没有时
+才回退 `pnpm dlx wrangler@latest`。
+
+> 为什么这样做：`wrangler@latest` 一旦升版，pnpm 会重装依赖，其中 `workerd` 原生包体积大，
+> 镜像不稳时会 `[23] The operation was aborted due to timeout` 直接失败（2026-10-31 实际踩到，
+> 从 4.152.0 升 4.156.0 时炸）。缓存里有可用版本时完全不需要这一步。
+> 需要强制指定时设 `$HSR_WRANGLER=<wrangler.js 绝对路径>`。
+
 站点内容 = 仓库的 `index.html` + `404.html` + `2026/**`（html/json/png）。装配方式是用 GitHub API 镜像仓库到
 `_site/`（raw media type + 重试；`codeload` 的 tarball 接口在本机会被重置连接，故不用），再交给 wrangler 上传。
 默认项目名 `hsr-calendar`，可用 `--project` 或 `$CLOUDFLARE_PAGES_PROJECT` 覆盖。
