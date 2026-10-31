@@ -409,7 +409,12 @@ def main():
     print("WROTE", out, img.size)
     print("MONTH %d %d | days %d | grid rows %d | today %s" % (y, m, n_days, rows, today))
     print("EVENTS %d | bars %d | bar rows %d | canvas %dx%d" % (len(events), len(bars_in), n_bar_rows, W, H))
-    print("NOWLINE frac %.5f -> x %.1f (track %.1f..%.1f) total_h %d" % (pos, tx0 + tw * pos, tx0, tx1, H))
+    if 0.0 <= pos <= 1.0:
+        print("NOWLINE frac %.5f -> x %.1f (track %.1f..%.1f) total_h %d"
+              % (pos, tx0 + tw * pos, tx0, tx1, H))
+    else:
+        print("NOWLINE frac %.5f 不在本月范围内（今天 %s，本月 %s ~ %s），未绘制"
+              % (pos, today.isoformat(), m_start.isoformat(), m_end.isoformat()))
     # 自检：内容底部是否超出画布
     if top + 42 + len(notes) * 24 > H - 26:
         print("WARN: 底部文字可能超出画布")
