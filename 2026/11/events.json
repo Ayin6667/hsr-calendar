@@ -186,32 +186,35 @@
     "date": "2026-11-11",
     "end": "2026-12-23",
     "type": "version",
-    "title": "v4.7「此刻，将群星付之一笑」版本期（11/11 上线，二相乐园篇最终章；至 12/23 05:59 为推算值）",
+    "url": "https://www.miyoushe.com/sr/article/79482327",
+    "title": "v4.7「此刻，将群星付之一笑」版本期（11/11 06:00 更新后 – 12/23 06:00，二相乐园篇最终章）",
     "short": "v4.7 版本期",
-    "source": "verified"
+    "source": "official"
   },
   {
     "date": "2026-11-11",
     "end": "2026-12-22",
     "type": "war",
-    "title": "活动跃迁（整版本）：星神·阿哈 ★5（量子·欢愉，CV 户松遥）+ 专属5★光锥，全版本常驻",
+    "url": "https://www.miyoushe.com/sr/article/79466344",
+    "title": "活动跃迁「愚戏众星」+ 光锥「流光定影•当第一声『阿哈』响起」：限定5★星神★阿哈（欢愉•量子）+ 限定5★光锥「当第一声『阿哈』响起（欢愉）」（11/11–12/22 15:00，全版本常驻）",
     "short": "星神·阿哈",
-    "source": "verified"
+    "source": "official"
   },
   {
     "date": "2026-11-11",
     "end": "2026-12-02",
     "type": "war",
-    "title": "前半复刻跃迁：银狼LV.999 / 花火 / 爻光（各带专属5★光锥）（11/11–12/02）",
+    "url": "https://www.miyoushe.com/sr/article/79466344",
+    "title": "前半复刻跃迁「铭心之萃」：银狼LV.999（欢愉•虚数）/ 火花（欢愉•火）/ 爻光（欢愉•物理），各带限定5★光锥「欢迎来到银河城」「花花世界迷人眼」「当她决定看见」（11/11–12/02 11:59）",
     "short": "前半复刻",
-    "source": "verified"
+    "source": "official"
   },
   {
     "date": "2026-11-11",
     "end": "2026-12-23",
     "type": "activity",
     "url": "https://www.miyoushe.com/sr/article/79216272",
-    "title": "「开场好礼先抱走」：登录即从 黄泉 / 丹恒·饮月 / 景元 中三选一，并自选 1 个「奇缘星魂」（11/11–12/23 05:59）",
+    "title": "「开场好礼先抱走」：奇缘星幕任选 黄泉 / 丹恒·饮月 / 景元 的「奇缘星魂」；魔术请柬再任选其一并赠直升60级材料；千星旅伴送旅伴金灵×1；累计签到 20 星轨专票；赠服装「黄紫风尚」等（4.7 版本期间）",
     "short": "三选一福利",
     "source": "official"
   },
@@ -219,7 +222,7 @@
     "date": "2026-11-11",
     "type": "activity",
     "url": "https://www.miyoushe.com/sr/article/79216272",
-    "title": "「巡星之礼」升级为「阿哈觉得你需要」：4.7 期间累计签到可领星轨专票×20（原 10 张翻倍）",
+    "title": "「阿哈觉得你需要」（原「巡星之礼」升级）：4.7 期间累计签到可领星轨专票×20",
     "short": "签到20专票",
     "source": "official"
   },
@@ -227,16 +230,18 @@
     "date": "2026-11-11",
     "type": "activity",
     "url": "https://www.miyoushe.com/sr/article/79258376",
-    "title": "「货币战争•入画奇航」全新赛季（4.7 更新后开放）：新玩法「奇遇」「主角光环」，员工与羁绊全量重制，可获星琼×4000",
+    "title": "「货币战争•入画奇航」全新赛季（11/11 更新后开放）：新玩法「奇遇」「主角光环」，羁绊全量重制，可获星琼×4000",
     "short": "货币战争S2",
     "source": "official"
   },
   {
     "date": "2026-11-11",
+    "end": "2026-12-23",
     "type": "activity",
-    "title": "版本活动「剧场版绒绒号：热热闹闹厨房」：帮阿哈经营甜品店赚取金币",
+    "url": "https://www.miyoushe.com/sr/article/79468686",
+    "title": "版本活动「剧场版绒绒号：欢闹厨房」：帮漫画家「模糊二维马」完成美食剧场版创作（11/11–12/23 03:59）",
     "short": "绒绒号厨房",
-    "source": "verified"
+    "source": "official"
   },
   {
     "date": "2026-11-11",
@@ -281,10 +286,12 @@
   },
   {
     "date": "2026-11-11",
+    "end": "2026-12-23",
     "type": "activity",
-    "title": "战斗活动「星际和平盛典：成名之路」",
+    "url": "https://www.miyoushe.com/sr/article/79469420",
+    "title": "战斗活动「星际和平盛典：成名之路」：击败强敌赢取命运的足迹等奖励（11/11–12/23 03:59）",
     "short": "成名之路",
-    "source": "verified"
+    "source": "official"
   },
   {
     "date": "2026-11-23",
@@ -298,6 +305,49 @@
     "type": "note",
     "title": "周一 04:00 周常刷新",
     "short": "周常刷新",
+    "source": "official"
+  },
+  {
+    "date": "2026-11-11",
+    "end": "2026-12-23",
+    "type": "activity",
+    "url": "https://www.miyoushe.com/sr/article/79450189",
+    "title": "版本活动「奇库寻遗」：开启神秘收藏库宝箱，可获 +15 五星遗器等奖励（11/11–12/23 03:59）",
+    "short": "奇库寻遗",
+    "source": "official"
+  },
+  {
+    "date": "2026-11-11",
+    "type": "note",
+    "url": "https://www.miyoushe.com/sr/article/79450027",
+    "title": "4.7 新增关卡「历战余响•贪欢的月亮」「差分宇宙•戏剧中人」（历战余响 11/16 04:00 起可提前解锁）",
+    "short": "新增关卡",
+    "source": "official"
+  },
+  {
+    "date": "2026-11-11",
+    "type": "note",
+    "url": "https://www.miyoushe.com/sr/article/79449811",
+    "title": "开拓任务「此刻，将群星付之一笑」永久开放（开拓等级≥21）",
+    "short": "开拓任务",
+    "source": "official"
+  },
+  {
+    "date": "2026-11-16",
+    "end": "2026-12-28",
+    "type": "note",
+    "url": "https://www.miyoushe.com/sr/article/79482327",
+    "title": "「末日幻影•领航冥茫」轮换（11/16 04:00 – 12/28 03:59）：击破带【坚防守备】的敌人可解控并激活终结技",
+    "short": "末日幻影",
+    "source": "official"
+  },
+  {
+    "date": "2026-11-30",
+    "end": "2027-01-11",
+    "type": "note",
+    "url": "https://www.miyoushe.com/sr/article/79482327",
+    "title": "「虚构叙事•虚事成理」轮换（11/30 04:00 – 2027/01/11 03:59）：获得笑点时额外积累 2 点战意值",
+    "short": "虚构叙事",
     "source": "official"
   }
 ]
