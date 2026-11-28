@@ -42,6 +42,11 @@ DEFAULT_PROJECT = os.environ.get("CLOUDFLARE_PAGES_PROJECT", "hsr-calendar")
 REPO = os.environ.get("GITHUB_REPO", "Ayin6667/hsr-calendar")
 BRANCH = os.environ.get("GITHUB_BRANCH", "main")
 
+# Legacy weekly calendars (YYYY/Www/). They stay in the repo as an archive but
+# are deliberately NOT published: they predate the month-calendar switch and
+# contain dates that were later corrected.
+LEGACY_PATH = re.compile(r"^\d{4}/W\d{2}/")
+
 
 def _month_subdir():
     """Current month as YYYY/MM in Beijing time (used only for the local fallback)."""
@@ -370,14 +375,20 @@ def build_site():
     try:
         tree = json.loads(gh_get("git/trees/%s?recursive=1" % BRANCH, token).decode())
         wanted = []
+        legacy = 0
         for node in tree.get("tree", []):
             p = node.get("path", "")
             if node.get("type") != "blob":
                 continue
             if p in ("index.html", "404.html") or (re.match(r"^\d{4}/", p) and p.lower().endswith(
                     (".html", ".json", ".png", ".css", ".js"))):
+                if LEGACY_PATH.match(p):
+                    legacy += 1
+                    continue
                 wanted.append(p)
         print("MIRROR : 仓库内待发布文件 %d 个" % len(wanted))
+        if legacy:
+            print("SKIP   : 旧周历存档 %d 个文件不发布（仓库内保留）" % legacy)
         failed = []
         for p in wanted:
             data = None
