@@ -26,6 +26,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.request
 
@@ -234,15 +235,33 @@ def resolve_creds(cli_path=None):
     return None, None, None
 
 
-def cf_get(path, token):
-    req = urllib.request.Request(CF_API + path,
-                                headers={"Authorization": "Bearer " + token,
-                                         "Content-Type": "application/json"})
-    try:
-        with urllib.request.urlopen(req, timeout=40) as resp:
-            return resp.status, json.loads(resp.read().decode())
-    except urllib.error.HTTPError as e:
-        return e.code, e.read().decode("utf-8", "replace")[:300]
+def cf_get(path, token, tries=4):
+    """GET a Cloudflare API path, retrying transient transport failures.
+
+    This host sees intermittent TLS resets and handshake timeouts against
+    api.cloudflare.com (a single attempt is not a reliable signal), so
+    transport errors are retried with backoff while HTTP status codes are
+    returned as-is.
+    """
+    last = None
+    for attempt in range(tries):
+        req = urllib.request.Request(CF_API + path,
+                                     headers={"Authorization": "Bearer " + token,
+                                              "Content-Type": "application/json"})
+        try:
+            with urllib.request.urlopen(req, timeout=40) as resp:
+                return resp.status, json.loads(resp.read().decode())
+        except urllib.error.HTTPError as e:
+            return e.code, e.read().decode("utf-8", "replace")[:300]
+        except Exception as e:
+            last = e
+            if attempt + 1 < tries:
+                wait = 2 + 3 * attempt
+                print("WARN   : %s 传输失败（%s: %s），%ds 后重试（%d/%d）"
+                      % (path, type(e).__name__, e, wait, attempt + 1, tries - 1))
+                time.sleep(wait)
+    print("ERROR  : %s 连续 %d 次传输失败：%s: %s" % (path, tries, type(last).__name__, last))
+    return 0, ""
 
 
 def check(token, account_id):
