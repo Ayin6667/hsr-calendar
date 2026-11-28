@@ -4,8 +4,10 @@
 Usage: python hsr_monthly.py YYYY MM [DD]
 
 Reads hsr_events_YYYY_MM.json next to this script, writes calendar.png.
-Layout: header + 7-column month grid (event chips per day + span bands)
-        + full-month timeline with a red "now" line at the real clock time.
+
+Visual language: minimal editorial / magazine style, matched to the web page.
+Backgrounds are flat, no rounded cards; separation is done with 1px hairlines,
+event types are carried by text colour rather than coloured blocks.
 """
 import io
 import json
@@ -24,42 +26,44 @@ CST = timezone(timedelta(hours=8))
 W = 1620
 M = 40                     # 外边距
 CELL_H = 200
-CELL_GAP = 8
+CELL_GAP = 1               # 1px hairline between cells
 BAR_ROW = 30
-TL_TOP_PAD = 34
+TL_TOP_PAD = 44
 
-BG = (13, 15, 28)
-PANEL = (25, 28, 50)
-PANEL_PAD = (18, 20, 34)
-CELL = (25, 28, 46)
-CELL_PAST = (20, 22, 36)
-CELL_TODAY = (36, 26, 34)
-BORDER = (62, 68, 108)
-GRIDLINE = (48, 54, 88)
-TEXT = (235, 238, 250)
-DIM = (158, 166, 198)
-FAINT = (112, 120, 152)
-ACCENT = (122, 162, 255)
-RED = (227, 59, 78)
-GOLD = (240, 200, 110)
+# --- palette (dark) — mirrors the web page tokens ---
+BG = (13, 14, 17)          # #0d0e11
+SURFACE = (19, 20, 24)     # #131418
+SURFACE2 = (25, 27, 33)    # #191b21
+LINE = (38, 40, 46)        # hairline on dark
+LINE2 = (56, 58, 66)
+TEXT = (240, 241, 244)
+DIM = (152, 157, 168)
+FAINT = (108, 113, 124)
+ACCENT = (245, 196, 81)    # #f5c451
+RED = (255, 93, 108)       # #ff5d6c
 
 TYPE_ORDER = {"version": 0, "war": 1, "light": 2, "activity": 3, "note": 4}
 
 TYPE_META = {
-    "version": ("版本", "★", (255, 77, 109)),
-    "war": ("跃迁", "◆", (255, 138, 31)),
-    "light": ("光锥", "◇", (232, 180, 15)),
-    "activity": ("活动", "●", (47, 191, 113)),
-    "note": ("公告", "■", (63, 111, 216)),
+    "version": ("版本", "★", (255, 107, 129)),   # #ff6b81
+    "war": ("跃迁", "◆", (255, 159, 67)),        # #ff9f43
+    "light": ("光锥", "◇", (232, 197, 71)),      # #e8c547
+    "activity": ("活动", "●", (74, 222, 128)),    # #4ade80
+    "note": ("公告", "■", (107, 155, 255)),      # #6b9bff
 }
 SOURCE_META = {
-    "official": ("[官]", (92, 220, 140), "官方确认"),
-    "verified": ("[验]", (240, 205, 95), "多方印证"),
-    "doubtful": ("[疑]", (250, 120, 120), "存疑待核"),
+    "official": ("官", (74, 222, 128), "官方确认"),
+    "verified": ("验", (232, 197, 71), "多方印证"),
+    "doubtful": ("疑", (255, 120, 120), "存疑待核"),
 }
 DOW = ["一", "二", "三", "四", "五", "六", "日"]
 FONTS = [r"C:\Windows\Fonts\msyh.ttc", r"C:\Windows\Fonts\msyhbd.ttc",
          r"C:\Windows\Fonts\simhei.ttf", r"C:\Windows\Fonts\simsun.ttc"]
+
+
+def mix(col, alpha, base):
+    """Composite col over base at the given alpha (0..1)."""
+    return tuple(int(round(c * alpha + b * (1 - alpha))) for c, b in zip(col, base))
 
 
 def font(size, bold=False):
@@ -196,23 +200,24 @@ def main():
     n_bar_rows = max(1, len(packed))
 
     longterm = [it for it in items if it["ongoing"]]
-    lt_h = 62 if longterm else 0
+    lt_h = 56 if longterm else 0
 
     grid_h = rows * CELL_H + (rows - 1) * CELL_GAP
     head_h = 132
-    dow_h = 40
-    tl_h = TL_TOP_PAD + n_bar_rows * BAR_ROW + 34
+    dow_h = 44
+    tl_h = TL_TOP_PAD + n_bar_rows * BAR_ROW + 36
     legend_h = 150
-    lt_block = (lt_h + 16) if lt_h else 0
-    H = head_h + dow_h + grid_h + 22 + tl_h + 18 + lt_block + legend_h + 26
+    lt_block = (lt_h + 20) if lt_h else 0
+    H = head_h + dow_h + grid_h + 24 + tl_h + 22 + lt_block + legend_h + 28
 
     img = Image.new("RGB", (W, H), BG)
     dr = ImageDraw.Draw(img)
 
     f_title = font(36, True)
-    f_sub = font(17)
+    f_sub = font(16)
+    f_month = font(24, True)
     f_sec = font(20, True)
-    f_dow = font(18, True)
+    f_dow = font(16, True)
     f_day = font(19, True)
     f_chip = font(13)
     f_tiny = font(12)
@@ -220,63 +225,60 @@ def main():
     f_badge = font(13, True)
 
     # ---------------- header ----------------
-    dr.rectangle([0, 0, W, head_h], fill=(20, 23, 44))
-    dr.rectangle([0, head_h - 4, W, head_h], fill=ACCENT)
-    dr.text((M + 6, 22), "崩坏：星穹铁道 · 月历", font=f_title, fill=TEXT)
-    dr.text((M + 8, 74),
-            "%d 年 %d 月 · 每周六刷新 · 生成于 %s（北京时间）" % (y, m, now.strftime("%Y-%m-%d %H:%M")),
-            font=f_sub, fill=ACCENT)
+    dr.text((M, 26), "崩坏：星穹铁道 · 月历", font=f_title, fill=TEXT)
+    dr.text((M + 2, 82),
+            "%d 年 %d 月 · 每周六刷新 · 数据截至 %s（北京时间）" % (y, m, now.strftime("%Y-%m-%d %H:%M")),
+            font=f_sub, fill=DIM)
     badge = "今天 %d/%d 星期%s %s" % (now.month, now.day, DOW[now.weekday()], now.strftime("%H:%M"))
-    bw = dr.textlength(badge, font=f_sub) + 40
-    dr.rounded_rectangle([W - M - bw, 40, W - M, 88], 10, fill=(46, 30, 38), outline=RED, width=2)
-    dr.text((W - M - bw + 20, 55), badge, font=f_sub, fill=(255, 160, 172))
+    bw = dr.textlength(badge, font=f_sub)
+    dr.text((W - M - bw, 44), badge, font=f_sub, fill=RED)
+    dr.line([M, head_h - 1, W - M, head_h - 1], fill=LINE2, width=1)
 
     # ---------------- 星期表头 ----------------
     grid_w = W - M * 2
     cw = (grid_w - CELL_GAP * 6) // 7
-    top = head_h + 8
+    top = head_h + 6
+    dr.rectangle([M, top, M + grid_w, top + dow_h - 8], fill=SURFACE2)
     for i, d in enumerate(DOW):
         x = M + i * (cw + CELL_GAP)
-        dr.rounded_rectangle([x, top, x + cw, top + dow_h - 8], 8, fill=(32, 35, 43), outline=(58, 62, 73), width=2)
         col = (255, 179, 71) if i >= 5 else DIM
         tw = dr.textlength(d, font=f_dow)
         dr.text((x + (cw - tw) / 2, top + 8), d, font=f_dow, fill=col)
     top += dow_h
 
-    # ---------------- 月网格 ----------------
+    # ---------------- 月网格（hairline grid） ----------------
+    dr.rectangle([M, top, M + grid_w, top + grid_h], fill=LINE)
     for i in range(rows * 7):
         dnum = i - pad + 1
         x = M + (i % 7) * (cw + CELL_GAP)
         yy = top + (i // 7) * (CELL_H + CELL_GAP)
         if dnum < 1 or dnum > n_days:
-            dr.rounded_rectangle([x, yy, x + cw, yy + CELL_H], 10, fill=PANEL_PAD, outline=(32, 35, 43), width=2)
+            dr.rectangle([x + CELL_GAP, yy + CELL_GAP, x + cw, yy + CELL_H], fill=SURFACE)
             continue
         d = date(y, m, dnum)
         is_today = (d == today)
-        fill_c = CELL_TODAY if is_today else (CELL_PAST if d < today else CELL)
-        edge = RED if is_today else BORDER
-        dr.rounded_rectangle([x, yy, x + cw, yy + CELL_H], 10, fill=fill_c,
-                             outline=edge, width=3 if is_today else 2)
-        num_col = (255, 107, 125) if is_today else ((255, 179, 71) if d.weekday() >= 5 else (200, 207, 220))
-        dr.text((x + 12, yy + 9), str(dnum), font=f_day, fill=num_col)
+        bgc = SURFACE2 if is_today else SURFACE
+        dr.rectangle([x + CELL_GAP, yy + CELL_GAP, x + cw, yy + CELL_H], fill=bgc)
+        if is_today:
+            dr.rectangle([x + CELL_GAP, yy + CELL_GAP, x + cw, yy + CELL_GAP + 2], fill=RED)
+        num_col = RED if is_today else ((255, 179, 71) if d.weekday() >= 5 else (200, 205, 214))
+        dr.text((x + 11, yy + 9), str(dnum), font=f_day, fill=num_col)
 
         cy = yy + 36
         starts = sorted(day_start.get(d.isoformat(), []),
                         key=lambda t: TYPE_ORDER.get(t["ev"]["type"], 9))
         for it in starts[:3]:
             ev = it["ev"]
-            label, glyph, col = TYPE_META.get(ev["type"], TYPE_META["note"])
-            txt = ev.get("short") or ev["title"][:8]
-            if it["end"] > it["start"]:
-                txt += "→%d/%d" % (it["end"].month, it["end"].day)
+            _label, glyph, col = TYPE_META.get(ev["type"], TYPE_META["note"])
             nm = ev.get("short") or ev["title"][:8]
             lead = "%s %s" % (glyph, nm)
-            lead = clip(dr, lead, f_chip, cw - 34)
-            dr.rectangle([x + 9, cy + 1, x + 12, cy + 15], fill=col)
-            dr.text((x + 17, cy), lead, font=f_chip, fill=col)
+            if it["end"] > it["start"]:
+                lead += " →%d/%d" % (it["end"].month, it["end"].day)
+            lead = clip(dr, lead, f_chip, cw - 24)
+            dr.text((x + 11, cy), lead, font=f_chip, fill=col)
             cy += 19
         if len(starts) > 3:
-            dr.text((x + 17, cy), "+%d 项" % (len(starts) - 3), font=f_tiny, fill=FAINT)
+            dr.text((x + 11, cy), "+%d 项" % (len(starts) - 3), font=f_tiny, fill=FAINT)
 
         spans = sorted(day_span.get(d.isoformat(), []),
                        key=lambda t: TYPE_ORDER.get(t["ev"]["type"], 9))
@@ -303,47 +305,48 @@ def main():
         block_h = len(shown) * bh + max(0, len(shown) - 1) * bgap
         if len(bands) > 4:
             block_h += 15
-        by = yy + CELL_H - 8 - block_h
+        by = yy + CELL_H - 9 - block_h
         for blabel, bcol in shown:
-            dr.rounded_rectangle([x + 8, by, x + cw - 8, by + bh], 3, fill=bcol)
-            nm = clip(dr, blabel, f_band, cw - 26)
-            dr.text((x + 13, by + 2), nm, font=f_band, fill=(255, 255, 255))
+            dr.rectangle([x + 9, by, x + 9 + 3, by + bh], fill=bcol)
+            dr.rectangle([x + 12, by, x + cw - 8, by + bh], fill=mix(bcol, 0.14, bgc))
+            nm = clip(dr, blabel, f_band, cw - 28)
+            dr.text((x + 16, by + 2), nm, font=f_band, fill=TEXT)
             by += bh + bgap
         if len(bands) > 4:
             dr.text((x + 12, by), "+%d 项" % (len(bands) - 4), font=f_tiny, fill=FAINT)
 
-    top += grid_h + 22
+    top += grid_h + 24
 
     # ---------------- 整月时间轴 ----------------
-    dr.rounded_rectangle([M, top, W - M, top + tl_h], 12, fill=(23, 26, 33), outline=(51, 54, 63), width=2)
-    dr.text((M + 18, top + 10), "整月时间轴", font=f_sec, fill=TEXT)
+    dr.text((M, top), "整月时间轴", font=f_sec, fill=TEXT)
     hint = "红线 = 当前时刻（按真实时间定位）"
-    dr.text((W - M - 18 - dr.textlength(hint, font=f_tiny), top + 16), hint, font=f_tiny, fill=FAINT)
+    dr.text((W - M - dr.textlength(hint, font=f_tiny), top + 6), hint, font=f_tiny, fill=FAINT)
+    dr.line([M, top + 34, W - M, top + 34], fill=LINE2, width=1)
 
-    tx0, tx1 = M + 18, W - M - 18
+    tx0, tx1 = M + 2, W - M - 2
     ty0 = top + TL_TOP_PAD
     track_h = n_bar_rows * BAR_ROW
-    dr.rectangle([tx0, ty0, tx1, ty0 + track_h], fill=(16, 18, 24), outline=(58, 62, 73), width=2)
+    dr.rectangle([tx0, ty0, tx1, ty0 + track_h], fill=SURFACE2, outline=LINE, width=1)
     tw = tx1 - tx0
     for d in range(1, n_days + 1, 7):
         gx = tx0 + tw * ((d - 1) / float(n_days))
-        dr.line([gx, ty0 + 2, gx, ty0 + track_h - 2], fill=(255, 255, 255, 20), width=1)
+        dr.line([gx, ty0 + 2, gx, ty0 + track_h - 2], fill=LINE, width=1)
 
     for r, row in enumerate(packed):
         for s_f, e_f, it, s, e in sorted(row, key=lambda t: t[0]):
             ev = it["ev"]
-            label, glyph, col = TYPE_META.get(ev["type"], TYPE_META["note"])
+            _label, glyph, col = TYPE_META.get(ev["type"], TYPE_META["note"])
             bx0 = tx0 + tw * s_f
             bx1 = tx0 + tw * e_f
-            by0 = ty0 + r * BAR_ROW + 3
-            by1 = by0 + BAR_ROW - 8
-            dr.rounded_rectangle([bx0, by0, bx1, by1], (by1 - by0) // 2,
-                                 fill=tuple(int(c * 0.20) for c in col), outline=col, width=2)
+            by0 = ty0 + r * BAR_ROW + 4
+            by1 = by0 + BAR_ROW - 10
+            dr.rectangle([bx0, by0, bx0 + 3, by1], fill=col)
+            dr.rectangle([bx0 + 3, by0, bx1, by1], fill=mix(col, 0.13, SURFACE2))
             lead = it["start"] < m_start
             tail = it["end"] > m_end
             tag = ("◀" if lead else "") + ("%s %s" % (glyph, ev.get("short") or ev["title"][:10])) + ("▶" if tail else "")
-            inner_w = max(10, (bx1 - bx0) - 20)
-            dr.text((bx0 + 12, by0 + 5), clip(dr, tag, f_badge, inner_w), font=f_badge, fill=col)
+            inner_w = max(10, (bx1 - bx0) - 22)
+            dr.text((bx0 + 12, by0 + 4), clip(dr, tag, f_badge, inner_w), font=f_badge, fill=col)
 
     # 刻度
     tk_y = ty0 + track_h + 8
@@ -356,53 +359,54 @@ def main():
     pos = ((now.date() - m_start).days + elapsed.total_seconds() / 86400.0) / float(n_days)
     if 0.0 <= pos <= 1.0:
         nx = tx0 + tw * pos
-        dr.line([nx, ty0 - 6, nx, ty0 + track_h + 4], fill=RED, width=3)
-        dr.ellipse([nx - 5, ty0 - 11, nx + 5, ty0 - 1], fill=RED)
+        dr.line([nx, ty0 - 8, nx, ty0 + track_h + 4], fill=RED, width=3)
+        dr.ellipse([nx - 5, ty0 - 13, nx + 5, ty0 - 3], fill=RED)
 
-    top += tl_h + 18
+    top += tl_h + 22
 
     # ---------------- 长期开放 ----------------
     if longterm:
-        dr.rounded_rectangle([M, top, W - M, top + lt_h], 12, fill=(23, 26, 33), outline=(51, 54, 63), width=2)
-        dr.text((M + 18, top + 12), "长期开放 / 常驻：", font=f_tiny, fill=DIM)
-        lx = M + 168
+        dr.text((M, top + 10), "长期开放 / 常驻", font=f_tiny, fill=DIM)
+        dr.line([M, top + lt_h - 8, W - M, top + lt_h - 8], fill=LINE, width=1)
+        lx = M + 130
         for it in longterm:
             col = TYPE_META.get(it["ev"]["type"], TYPE_META["note"])[2]
             t = it["ev"].get("short") or it["ev"]["title"][:10]
-            wpx = dr.textlength(t, font=f_tiny) + 22
-            if lx + wpx > W - M - 18:
+            wpx = dr.textlength(t, font=f_tiny) + 24
+            if lx + wpx > W - M:
                 break
-            dr.rounded_rectangle([lx, top + 8, lx + wpx, top + 34], 13, fill=(30, 34, 43), outline=col, width=1)
-            dr.text((lx + 11, top + 14), t, font=f_tiny, fill=col)
-            lx += wpx + 10
-        top += lt_h + 16
+            dr.rectangle([lx, top + 9, lx + 3, top + 29], fill=col)
+            dr.text((lx + 10, top + 11), t, font=f_tiny, fill=col)
+            lx += wpx + 12
+        top += lt_h + 20
 
     # ---------------- 图例 ----------------
-    dr.rounded_rectangle([M, top, W - M, H - 26], 12, fill=(19, 22, 41), outline=BORDER, width=2)
-    dr.text((M + 20, top + 14), "信源等级：", font=f_tiny, fill=DIM)
-    lx = M + 116
+    dr.line([M, top, W - M, top], fill=LINE2, width=1)
+    dr.text((M, top + 14), "信源等级", font=f_tiny, fill=DIM)
+    lx = M + 80
     for k in ("official", "verified", "doubtful"):
         mk, mc, desc = SOURCE_META[k]
-        dr.text((lx, top + 14), mk, font=f_badge, fill=mc)
-        dr.text((lx + 34, top + 14), desc, font=f_tiny, fill=TEXT)
-        lx += 152
-    dr.text((M + 590, top + 14), "事件类型：", font=f_tiny, fill=DIM)
-    lx = M + 686
+        dr.ellipse([lx, top + 18, lx + 7, top + 25], fill=mc)
+        dr.text((lx + 13, top + 14), desc, font=f_tiny, fill=TEXT)
+        lx += 130
+    dr.text((M + 470, top + 14), "事件类型", font=f_tiny, fill=DIM)
+    lx = M + 550
     for k, (lb, gl, col) in TYPE_META.items():
-        dr.text((lx, top + 14), lb, font=f_tiny, fill=col)
-        lx += dr.textlength(lb, font=f_tiny) + 26
+        dr.text((lx, top + 14), gl, font=f_tiny, fill=col)
+        dr.text((lx + 18, top + 14), lb, font=f_tiny, fill=col)
+        lx += dr.textlength(lb, font=f_tiny) + 46
     n_off = sum(1 for e in events if e["source"] == "official")
     n_ver = sum(1 for e in events if e["source"] == "verified")
     n_dou = sum(1 for e in events if e["source"] == "doubtful")
     notes = [
-        "覆盖 %s ~ %s（%d 天）· 事件 %d 项（🟢%d / 🟡%d / 🔴%d）· 时间轴 %d 条 / %d 行"
+        "覆盖 %s ~ %s（%d 天）· 事件 %d 项（官方 %d / 印证 %d / 存疑 %d）· 时间轴 %d 条 / %d 行"
         % (m_start.isoformat(), m_end.isoformat(), n_days, len(events), n_off, n_ver, n_dou,
            len(bars_in), n_bar_rows),
-        "来源：HoYoverse 官方版本更新说明与官方社区发帖、17173 / 4399（公众号官方转载）、TapTap 官方号、GameWith / GameMarket / Notebookcheck 交叉核对。",
-        "红标 [疑] 为信源之间日期或名称不一致项；条带两端的 ◀ ▶ 表示该事件在月初之前已开启 / 月末之后仍在持续，请以游戏内公告为准。",
+        "来源：HoYoverse 官方版本更新说明与官方社区发帖、17173 / 4399（公众号官方转载）、TapTap 官方号、Game8 / GameMarket 交叉核对。",
+        "存疑项为信源之间日期或名称不一致；条带两端的 ◀ ▶ 表示该事件在月初之前已开启 / 月末之后仍在持续，请以游戏内公告为准。",
     ]
     for i, nt in enumerate(notes):
-        dr.text((M + 20, top + 42 + i * 24), nt, font=f_tiny, fill=DIM if i < 2 else FAINT)
+        dr.text((M, top + 44 + i * 24), nt, font=f_tiny, fill=DIM if i < 2 else FAINT)
 
     out = os.path.join(HERE, "calendar.png")
     img.save(out, "PNG")
@@ -416,7 +420,7 @@ def main():
         print("NOWLINE frac %.5f 不在本月范围内（今天 %s，本月 %s ~ %s），未绘制"
               % (pos, today.isoformat(), m_start.isoformat(), m_end.isoformat()))
     # 自检：内容底部是否超出画布
-    if top + 42 + len(notes) * 24 > H - 26:
+    if top + 44 + len(notes) * 24 > H - 20:
         print("WARN: 底部文字可能超出画布")
     else:
         print("OK: 版面在画布内")
